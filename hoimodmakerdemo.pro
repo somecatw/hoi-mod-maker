@@ -9,18 +9,23 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    focus.cpp \
+    focuseditor.cpp \
+    focusitem.cpp \
     focustree.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    parser.cpp
 
 HEADERS += \
-    focus.h \
+    focuseditor.h \
+    focusitem.h \
     focustree.h \
-    mainwindow.h
+    mainwindow.h \
+    parser.h
 
 FORMS += \
-    focus.ui \
+    focuseditor.ui \
+    focusitem.ui \
     focustree.ui \
     mainwindow.ui
 

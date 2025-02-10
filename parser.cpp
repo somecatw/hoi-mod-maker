@@ -1,5 +1,5 @@
 #include "parser.h"
-
+using namespace std;
 
 
 Parser::identifier::identifier(std::string strr,bool it){str=strr;mode=it?3:1;}
@@ -69,6 +69,9 @@ Parser::Parser(std::string ftype,bool ban_skip,bool _hide,bool _chide,bool _end)
     if(!ban_skip)skip=" \n\r\t";
     hide=_hide;
     chide=_chide;
+}
+void Parser::exclude(string x,int type){
+    ttfa.push_back({{{x,1}},type});
 }
 bool Parser::tobeskiped(citer x){
     return std::find(skip.begin(),skip.end(),*x)!=skip.end();
