@@ -14,20 +14,25 @@ SOURCES += \
     focustree.cpp \
     main.cpp \
     mainwindow.cpp \
-    parser.cpp
+    parser.cpp \
+    preset_add_point.cpp
 
 HEADERS += \
     focuseditor.h \
     focusitem.h \
     focustree.h \
     mainwindow.h \
-    parser.h
+    parser.h \
+    preset.h \
+    preset_add_point.h \
+    presetcpp
 
 FORMS += \
     focuseditor.ui \
     focusitem.ui \
     focustree.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    preset_add_point.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
