@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>focus</class>
- <widget class="QMainWindow" name="focus">
+ <class>FocusEditor</class>
+ <widget class="QMainWindow" name="FocusEditor">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -80,7 +80,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
      <x>0</x>
      <y>0</y>
      <width>1058</width>
-     <height>24</height>
+     <height>17</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">

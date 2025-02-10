@@ -1,6 +1,6 @@
 #include "focustree.h"
 #include "ui_focustree.h"
-#include "focus.h"
+#include "focuseditor.h"
 
 focustree::focustree(QWidget *parent)
     : QMainWindow(parent)
@@ -16,7 +16,7 @@ focustree::~focustree()
 
 void focustree::on_focusa_clicked()
 {
-    focus *a = new focus();
+    FocusEditor *a = new FocusEditor();
     a->show();
 }
 
