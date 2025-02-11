@@ -2,92 +2,177 @@
 using namespace std;
 
 
-Parser::identifier::identifier(std::string strr,bool it){str=strr;mode=it?3:1;}
-Parser::identifier::identifier(class Parser* parss){pars=parss;mode=2;}
+class __parser{
+private:
+    using citer=std::string::const_iterator;
+    using citerm=std::string::const_iterator&;
+    class identifier{
+    public:
+        std::string str;
+        __parser* pars;
+        int mode;
+        identifier(std::string strr,bool it=0);
+        identifier(__parser* parss);
+        static constexpr int String = 1;
+        static constexpr int Parser = 2;
+        static constexpr int Exclude = 3;
+    };
+    struct matchnode{
+        std::list<identifier> content;
+        int mode;
+        static constexpr int necessary  = 1;
+        static constexpr int optional = 2;
+        static constexpr int repeatable = 3;
+    };
+    std::string mytype;
+    std::vector<matchnode> ttfa;
+    std::string skip,stop;
+    bool hide,chide,fend;
+public:
+    __parser();
+    __parser(std::string ftype,bool ban_skip=false,bool _hide=false,bool _chide=false,bool _end=false);
+private:
+    bool tobeskiped(citer x);
+    bool endflag(citer x);
+public:
+    void exclude(std::string x,int type=matchnode::repeatable);
+
+    template<typename STR_OR_PTR>
+    void necessary(STR_OR_PTR x){
+        ttfa.push_back({{{x}},matchnode::necessary});
+    }
+    template<typename _T,typename ...Args>
+    void necessary(_T x,Args ...args){
+        ttfa.push_back({{{x}},matchnode::necessary});
+        necessary(args...);
+    }
+    template<typename STR_OR_PTR>
+    void optional(STR_OR_PTR x){
+        ttfa.push_back({{{x}},matchnode::optional});
+    }
+    template<typename STR_OR_PTR>
+    void repeatable(STR_OR_PTR x){
+        ttfa.push_back({{{x}},matchnode::repeatable});
+    }
+    template<typename ...Args>
+    void anyNecessary(Args ...args){
+        ttfa.push_back({{},matchnode::necessary});
+        _m_regnecor(args...);
+    }
+    template<typename ...Args>
+    void anyOptional(Args ...args){
+        ttfa.push_back({{},matchnode::optional});
+        _m_regsecor(args...);
+    }
+private:
+    template<typename _T,typename ...Args>
+    void _m_regnecor(_T x,Args ...args){
+        ttfa.rbegin()->content.push_back(identifier(x));
+        _m_regnecor(args...);
+    }
+    void _m_regnecor();
+    template<typename _T,typename ...Args>
+    void _m_regsecor(_T x,Args ...args){
+        ttfa.rbegin()->content.push_back(identifier(x));
+        _m_regsecor(args...);
+    }
+    void _m_regsecor();
+    AstNode tryMatch
+        (citerm begin,citer end,const matchnode& cnode);
+public:
+    AstNode parse(citerm begin,citer end);
+    AstNode parse(std::string x);
+};
+
+extern __parser file;
 
 
-void astNode::prt(int width)const{
+__parser::identifier::identifier(std::string strr,bool it){str=strr;mode=it?3:1;}
+__parser::identifier::identifier(class __parser* parss){pars=parss;mode=2;}
+
+
+void AstNode::prt(int width)const{
     if(!hide){
-        for(int i=0;i<width;i++)std::cout<<"---";
-        std::cout<<"\""<<content<<"\""<<" (type="<<type<<")"<<std::endl;
+        for(int i=0;i<width;i++)qDebug().noquote()<<"---";
+        qDebug().noquote()<<"\""<<content<<"\""<<" (type="<<type<<")"<<Qt::endl;
     }
     if(end)return;
-    for(const fobject& wtf:children)wtf.prt(width+(!hide));
+    for(const AstNode& wtf:children)wtf.prt(width+(!hide));
 }
 
-void astNode::_m_correct(std::vector<fobject>& ttfa)const{
-    fobject self;
+void AstNode::_m_correct(std::vector<AstNode>& ttfa)const{
+    AstNode self;
     self.type=type,self.content=content;
     if(end){if(!hide)ttfa.push_back(self);return;}
-    for(const fobject& wtf:children)
+    for(const AstNode& wtf:children)
         if(hide)wtf._m_correct(ttfa);
         else wtf._m_correct(self.children);
     if(!hide)ttfa.push_back(self);
 }
-void astNode::pp(int width)const{
+void AstNode::pp(int width)const{
     for(int i=0;i<width;i++)std::cout<<"---";
     std::cout<<"\""<<content<<"\""<<" (type="<<type<<")"<<std::endl;
-    for(const fobject& wtf:children)wtf.pp(width+1);
+    for(const AstNode& wtf:children)wtf.pp(width+1);
 }
 
-astNode astNode::correct()const{
-    fobject root=*this;
+AstNode AstNode::correct()const{
+    AstNode root=*this;
     while(root.hide)root=(root.children.at(0));
-    std::vector<fobject> temp;
-    for(const fobject& wtf:root.children)
+    std::vector<AstNode> temp;
+    for(const AstNode& wtf:root.children)
         wtf._m_correct(temp);
     root.children=temp;
     return root;
 }
 
-bool astNode::hasChild(std::string type)const{
-    for(const fobject& child:this->children)
+bool AstNode::hasChild(std::string type)const{
+    for(const AstNode& child:this->children)
         if(child.type==type)return true;
     return false;
 }
-bool astNode::hasContent(std::string cont)const{
-    for(const fobject& child:this->children)
+bool AstNode::hasContent(std::string cont)const{
+    for(const AstNode& child:this->children)
         if(child.content==cont)return true;
     return false;
 }
-astNode astNode::firstMatch(std::string type)const{
-    for(const fobject& child:this->children)
+AstNode AstNode::firstMatch(std::string type)const{
+    for(const AstNode& child:this->children)
         if(child.type==type)return child;
-    return fobject();
+    return AstNode();
 }
-std::vector<astNode> astNode::allMatch(std::string type)const{
-    std::vector<fobject> ret;
-    for(const fobject& child:this->children)
+std::vector<AstNode> AstNode::allMatch(std::string type)const{
+    std::vector<AstNode> ret;
+    for(const AstNode& child:this->children)
         if(child.type==type)ret.push_back(child);
     return ret;
 }
 
-Parser::Parser(){};
-Parser::Parser(std::string ftype,bool ban_skip,bool _hide,bool _chide,bool _end){
+__parser::__parser(){};
+__parser::__parser(std::string ftype,bool ban_skip,bool _hide,bool _chide,bool _end){
     mytype=ftype;
     fend=_end;
     if(!ban_skip)skip=" \n\r\t";
     hide=_hide;
     chide=_chide;
 }
-void Parser::exclude(string x,int type){
+void __parser::exclude(string x,int type){
     ttfa.push_back({{{x,1}},type});
 }
-bool Parser::tobeskiped(citer x){
+bool __parser::tobeskiped(citer x){
     return std::find(skip.begin(),skip.end(),*x)!=skip.end();
 }
-bool Parser::endflag(citer x){
+bool __parser::endflag(citer x){
     return std::find(stop.begin(),stop.end(),*x)!=stop.end();
 }
-void Parser::_m_regnecor(){
+void __parser::_m_regnecor(){
     ttfa.rbegin()->mode=matchnode::necessary;
 }
-void Parser::_m_regsecor(){
+void __parser::_m_regsecor(){
     ttfa.rbegin()->mode=matchnode::optional;
 }
-astNode Parser::tryMatch
+AstNode __parser::tryMatch
     (citerm begin,citer end,const matchnode& cnode){
-    std::vector<fobject> considered_retval;
+    std::vector<AstNode> considered_retval;
     std::vector<citer> position_of_retval;
     for(const identifier& cid:cnode.content){
         citer t=begin;
@@ -98,7 +183,7 @@ astNode Parser::tryMatch
             considered_retval.push_back({"token",cid.str,{},chide});
             position_of_retval.push_back(t);
         }else if(cid.mode==identifier::Parser){
-            fobject curr=cid.pars->parse(t,end);
+            AstNode curr=cid.pars->parse(t,end);
             if(curr.type=="fail")goto fail;
             considered_retval.push_back(curr);
             position_of_retval.push_back(t);
@@ -106,7 +191,7 @@ astNode Parser::tryMatch
             //cout<<cid.str<<" "<<*t<<endl;
             if(cid.str.find(*t)==std::string::npos&&t!=end)++t;
             else goto fail;
-            fobject temp={"token",std::string()+(*(t-1)),{},chide};
+            AstNode temp={"token",std::string()+(*(t-1)),{},chide};
             considered_retval.push_back(temp);
             position_of_retval.push_back(t);
         }
@@ -120,9 +205,9 @@ astNode Parser::tryMatch
     begin=position_of_retval[id];
     return considered_retval[id];
 }
-astNode Parser::parse(citerm begin,citer end){
+AstNode __parser::parse(citerm begin,citer end){
     //cout<<"begin to match:"<<mytype<<endl;
-    fobject ret;
+    AstNode ret;
     ret.type=mytype;
     ret.hide=hide;
     ret.end=fend;
@@ -131,7 +216,7 @@ astNode Parser::parse(citerm begin,citer end){
     for(const matchnode& cnode:ttfa){
         bool flag=false;
         while(!flag||cnode.mode==matchnode::repeatable){
-            fobject curr=tryMatch(begin,end,cnode);
+            AstNode curr=tryMatch(begin,end,cnode);
             if(curr.type=="fail"){
                 if(cnode.mode==matchnode::necessary){return {"fail","",{},false};}
                 else break;
@@ -145,15 +230,15 @@ astNode Parser::parse(citerm begin,citer end){
     ret.content=std::string(prevbegin,begin);
 endwork:return ret;
 }
-astNode Parser::parse(std::string x){
+AstNode __parser::parse(std::string x){
     citer a=x.begin(),b=x.end();
     return parse(a,b);
 }
 
-Parser strchar("character",1),str_no_quot("string",1),str_has_quot("string"),str("string",1,0,1,1);
-Parser block("block"),term("term"),argument("argument"),file("file");
+__parser strchar("character",1),str_no_quot("string",1),str_has_quot("string"),str("string",1,0,1,1);
+__parser block("block"),term("term"),argument("argument"),file("file");
 
-void init(){
+void Parser::init(){
     strchar.exclude("\"{} \t\n\r=<>",1);
 
     str_no_quot.necessary(&strchar);
@@ -178,14 +263,14 @@ void init(){
     file.repeatable(&term);
 
 }
-void replaceAll(std::string &str, const std::string &from, const std::string &to) {
+void Parser::replaceAll(std::string &str, const std::string &from, const std::string &to) {
     size_t start_pos=0;
     while((start_pos=str.find(from, start_pos))!=std::string::npos) {
         str.replace(start_pos,from.length(),to);
         start_pos += to.length();
     }
 }
-void clearComment(std::string &str){
+void Parser::clearComment(std::string &str){
     std::string temp;
     bool flag=0;
     for(char c:str){
@@ -196,7 +281,17 @@ void clearComment(std::string &str){
     }
     str=temp;
 }
-void parse(std::string str){
+AstNode Parser::parse(std::string filename){
+    static bool flag=false;
+
+    ifstream ttfa(filename);
+    stringstream buf;
+    buf<<ttfa.rdbuf();
+    string str=buf.str();
+
+    if(!flag){init();flag=true;}
+
+    // 本来我以为原始文本里没有左右方括号，但是其实是有的，所以这个地方要改
     replaceAll(str,"\\\"","[");
     replaceAll(str,"\\\\","]");
 
@@ -205,7 +300,10 @@ void parse(std::string str){
     if(str.size()>3u && (unsigned char)str[0]==0xef && (unsigned char)str[1]==0xbb && (unsigned char)str[2]==0xbf)
         str.erase(str.begin(),str.begin()+3);
 
-    astNode node=file.parse(str);
-    if(node.content.size()==str.size())std::cout<<"ok"<<std::endl;
-    else std::cout<<"fail"<<std::endl;
+    AstNode node=file.parse(str).correct();
+
+    if(node.content.size()==str.size())qDebug().noquote()<<"Successfully loaded "<<filename<<Qt::endl;
+    else qDebug()<<"Syntax error found in "<<filename<<Qt::endl;
+
+    return node;
 }

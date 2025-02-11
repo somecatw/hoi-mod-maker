@@ -11,6 +11,7 @@ CONFIG += c++17
 SOURCES += \
     focuseditor.cpp \
     focusitem.cpp \
+    focusmodel.cpp \
     focustree.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -20,6 +21,7 @@ SOURCES += \
 HEADERS += \
     focuseditor.h \
     focusitem.h \
+    focusmodel.h \
     focustree.h \
     mainwindow.h \
     parser.h \

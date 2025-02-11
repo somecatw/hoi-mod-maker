@@ -21,7 +21,7 @@ public:
     explicit FocusItem(QWidget *parent = nullptr);
     ~FocusItem();
 
-    // used as index
+    // 对应国策的 id
     QString focusid;
 
 protected:

@@ -6,110 +6,61 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <QDebug>
+
+// 抽象语法树上的节点，用于保存键值对
+struct AstNode{
+    std::string type,content;
+    std::vector<AstNode> children;
+    bool hide,end;
+
+    // 调试监视用的输出函数
+    void prt(int width=0)const;
+private:
+    void _m_correct(std::vector<AstNode>& ttfa)const;
+    void pp(int width=0)const;
+public:
+    // parse 字符串后去掉隐藏节点用
+    AstNode correct()const;
+
+    // 查询子节点中有没有类型为 type 的节点
+    bool hasChild(std::string type)const;
+
+    // 查询子节点中有没有内容为 cont 的节点
+    bool hasContent(std::string cont)const;
+
+    // 返回第一个匹配 type 类型的节点
+    AstNode firstMatch(std::string type)const;
+
+    // 以此类推
+    std::vector<AstNode> allMatch(std::string type)const;
+};
 
 class Parser{
 private:
-    using citer=std::string::const_iterator;
-    using citerm=std::string::const_iterator&;
-    class identifier{
-    public:
-        std::string str;
-        Parser* pars;
-        int mode;
-        identifier(std::string strr,bool it=0);
-        identifier(Parser* parss);
-        static constexpr int String = 1;
-        static constexpr int Parser = 2;
-        static constexpr int Exclude = 3;
-    };
-    struct matchnode{
-        std::list<identifier> content;
-        int mode;
-        static constexpr int necessary  = 1;
-        static constexpr int optional = 2;
-        static constexpr int repeatable = 3;
-    };
-    std::string mytype;
-    std::vector<matchnode> ttfa;
-    std::string skip,stop;
-    bool hide,chide,fend;
+    static void init();
+    static void replaceAll(std::string &str, const std::string &from, const std::string &to);
+    static void clearComment(std::string &str);
 public:
-    struct fobject{
-        std::string type,content;
-        std::vector<fobject> children;
-        bool hide,end;
-        void prt(int width=0)const;
-    private:
-        void _m_correct(std::vector<fobject>& ttfa)const;
-        void pp(int width=0)const;
-    public:
-        fobject correct()const;
-        bool hasChild(std::string type)const;
-        bool hasContent(std::string cont)const;
-        fobject firstMatch(std::string type)const;
-        std::vector<fobject> allMatch(std::string type)const;
-    };
-    Parser();
-    Parser(std::string ftype,bool ban_skip=false,bool _hide=false,bool _chide=false,bool _end=false);
-private:
-    bool tobeskiped(citer x);
-    bool endflag(citer x);
-public:
-    void exclude(std::string x,int type=matchnode::repeatable);
-
-    template<typename STR_OR_PTR>
-    void necessary(STR_OR_PTR x){
-        ttfa.push_back({{{x}},matchnode::necessary});
-    }
-    template<typename _T,typename ...Args>
-    void necessary(_T x,Args ...args){
-        ttfa.push_back({{{x}},matchnode::necessary});
-        necessary(args...);
-    }
-    template<typename STR_OR_PTR>
-    void optional(STR_OR_PTR x){
-        ttfa.push_back({{{x}},matchnode::optional});
-    }
-    template<typename STR_OR_PTR>
-    void repeatable(STR_OR_PTR x){
-        ttfa.push_back({{{x}},matchnode::repeatable});
-    }
-    template<typename ...Args>
-    void anyNecessary(Args ...args){
-        ttfa.push_back({{},matchnode::necessary});
-        _m_regnecor(args...);
-    }
-    template<typename ...Args>
-    void anyOptional(Args ...args){
-        ttfa.push_back({{},matchnode::optional});
-        _m_regsecor(args...);
-    }
-private:
-    template<typename _T,typename ...Args>
-    void _m_regnecor(_T x,Args ...args){
-        ttfa.rbegin()->content.push_back(identifier(x));
-        _m_regnecor(args...);
-    }
-    void _m_regnecor();
-    template<typename _T,typename ...Args>
-    void _m_regsecor(_T x,Args ...args){
-        ttfa.rbegin()->content.push_back(identifier(x));
-        _m_regsecor(args...);
-    }
-    void _m_regsecor();
-    fobject tryMatch
-        (citerm begin,citer end,const matchnode& cnode);
-public:
-    fobject parse(citerm begin,citer end);
-    fobject parse(std::string x);
+    // 处理文件并返回文件对应的节点（如果匹配不上，会返回 type=fail）
+    static AstNode parse(std::string filename);
 };
-using astNode=Parser::fobject;
 
-extern Parser strchar,str_no_quot,str_has_quot,str;
-extern Parser block,term,argument,file;
+/*
+class TermArray{
+private:
+    QVector<AstNode> terms;
+public:
+    TermArray();
+    TermArray(QString str);
+    AstNode& operator[](unsigned id);
+    AstNode& operator[](unsigned id)const;
+    QVector<AstNode>::iterator begin();
+    QVector<AstNode>::iterator end();
+    QString toString();
+};
+*/
 
-void init();
-void replaceAll(std::string &str, const std::string &from, const std::string &to);
-void clearComment(std::string &str);
-void parse(std::string str);
 #endif // PARSER_H
