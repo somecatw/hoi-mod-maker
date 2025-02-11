@@ -11,8 +11,15 @@ public:
     QString id;
     QString icon;
     int x,y;
-    QString prereq;
+
+    // 第一维是与，第二维是或
+    QVector<QVector<QString>> preReq;
     QString relativeId;
+
+    QVector<AstNode> otherInfo;
+
+    Focus();
+    Focus(const AstNode& node);
 };
 
 class FocusModel : public QObject
@@ -25,6 +32,7 @@ public:
 private:
     QVector<Focus> focuses;
 signals:
+    void dataChanged();
 };
 
 #endif // FOCUSMODEL_H

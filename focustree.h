@@ -5,7 +5,7 @@
 #include <QFileDialog>
 #include <QGraphicsView>
 #include <QWheelEvent>
-#include "parser.h"
+#include "focusmodel.h"
 
 
 namespace Ui {
@@ -39,6 +39,7 @@ private:
     Ui::focustree *focustreeui;
     QGraphicsScene *treeScene;
     FocusTreeView *treeView;
+    FocusModel *focusModel;
 };
 
 #endif // FOCUSTREE_H

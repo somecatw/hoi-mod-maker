@@ -1,6 +1,7 @@
 #include "focustree.h"
 #include "ui_focustree.h"
 #include "focuseditor.h"
+#include "parser.h"
 
 focustree::focustree(QWidget *parent)
     : QMainWindow(parent)
@@ -9,7 +10,8 @@ focustree::focustree(QWidget *parent)
     focustreeui->setupUi(this);
     treeScene = new QGraphicsScene(this);
     treeView = new FocusTreeView(treeScene, this);
-
+    this->setCentralWidget(treeView);
+    this->focusModel = new FocusModel(this);
 }
 
 focustree::~focustree()
@@ -30,8 +32,9 @@ void focustree::on_actionopen_triggered()
     if (!fileName.isEmpty()) {
         qDebug() << "选择的文件:" << fileName;
     }else return;
-    AstNode node=Parser::parse(fileName.toStdString());
-    node.prt();
+    AstNode node=Parser::parse(fileName);
+    //node.prt();
+    this->focusModel->init(node);
 }
 
 void FocusTreeView::wheelEvent(QWheelEvent *evt){

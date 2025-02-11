@@ -265,7 +265,7 @@ void Parser::init(){
 }
 void Parser::replaceAll(std::string &str, const std::string &from, const std::string &to) {
     size_t start_pos=0;
-    while((start_pos=str.find(from, start_pos))!=std::string::npos) {
+    while((start_pos=str.find(from, start_pos))!=(size_t)-1) {
         str.replace(start_pos,from.length(),to);
         start_pos += to.length();
     }
@@ -281,10 +281,10 @@ void Parser::clearComment(std::string &str){
     }
     str=temp;
 }
-AstNode Parser::parse(std::string filename){
+AstNode Parser::parse(QString filename){
     static bool flag=false;
 
-    ifstream ttfa(filename);
+    ifstream ttfa(filename.toStdString());
     stringstream buf;
     buf<<ttfa.rdbuf();
     string str=buf.str();
@@ -306,4 +306,41 @@ AstNode Parser::parse(std::string filename){
     else qDebug()<<"Syntax error found in "<<filename<<Qt::endl;
 
     return node;
+}
+
+AstNode Parser::getFirst(const AstNode &node, QString key){
+    for(const AstNode &child:node.children)
+        if(child.type=="term"){
+            if(child.children[0].content==key)
+                return child;
+        }
+    return AstNode();
+}
+
+QVector<AstNode> Parser::getAll(const AstNode &node, QString key){
+    QVector<AstNode> ret;
+    for(const AstNode &child:node.children)
+        if(child.type=="term"){
+            if(child.children[0].content==key)
+                ret.emplaceBack(child);
+        }
+    return ret;
+}
+
+QVector<AstNode> Parser::getAllExcept(const AstNode &node, QVector<QString> keys){
+    QVector<AstNode> ret;
+    for(const AstNode &child:node.children)
+        if(child.type=="term"){
+            if(keys.indexOf(child.children[0].content)==-1)
+                ret.emplaceBack(child);
+        }
+    return ret;
+}
+
+AstNode Parser::getValue(const AstNode &node){
+    if(node.children.size()<=1||node.children[1].children.size()<=1){
+        qDebug()<<"Error: <key,value> expected but there's no value found";
+        return AstNode();
+    }
+    return node.children[1].children[1];
 }

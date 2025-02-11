@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <QDebug>
+#include <QString>
 
 // 抽象语法树上的节点，用于保存键值对
 struct AstNode{
@@ -45,7 +46,15 @@ private:
     static void clearComment(std::string &str);
 public:
     // 处理文件并返回文件对应的节点（如果匹配不上，会返回 type=fail）
-    static AstNode parse(std::string filename);
+    static AstNode parse(QString filename);
+
+    // 在 node 的子节点中寻找满足条件的 key （输入 node 必须是 file 或者 block）
+    static AstNode getFirst(const AstNode &node, QString key);
+    static QVector<AstNode> getAll(const AstNode &node, QString key);
+    static QVector<AstNode> getAllExcept(const AstNode &node, QVector<QString> keys_excluded);
+
+    // 获取 term 的参数（输入 node 必须是 term）
+    static AstNode getValue(const AstNode &node);
 };
 
 /*
