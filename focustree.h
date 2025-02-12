@@ -29,6 +29,11 @@ class focustree : public QMainWindow
 public:
     explicit focustree(QWidget *parent = nullptr);
     ~focustree();
+    static constexpr double wgap = 80;
+    static constexpr double hgap = 100;
+
+signals:
+    void resetSelection();
 
 private slots:
     void on_focusa_clicked();
@@ -45,7 +50,9 @@ private:
     // 如果 id 已经存在，就直接 return
     void addFocusItem(const Focus& f);
 
+    void addFocusPreqLine(const Focus& f);
     QGraphicsProxyWidget* getProxy(const QString& id) const;
+
 };
 
 #endif // FOCUSTREE_H

@@ -48,6 +48,15 @@ const QVector<Focus>& FocusModel::allData() const{
     return focuses;
 }
 
+QVector<QString> getFocusPreqs(const AstNode &term){
+    QVector<QString> ret;
+
+    const QVector<AstNode> &focusNodes = Parser::getAll(Parser::getValue(term),"focus");
+    foreach(const AstNode &node,focusNodes)
+        ret.push_back(QString::fromStdString(Parser::getValue(node).content));
+
+    return ret;
+}
 
 Focus::Focus(){}
 
@@ -62,6 +71,7 @@ Focus::Focus(const AstNode& node){
     const AstNode &xNode    = Parser::getValue(request(lst,"x"));
     const AstNode &yNode    = Parser::getValue(request(lst,"y"));
     const AstNode &rIdNode  = Parser::getFirst(lst,"relative_position_id");
+    const QVector<AstNode> &preqNodes = Parser::getAll(lst,"prerequisite");
 
     if(idNode.type.empty()||iconNode.type.empty()||xNode.type.empty()||yNode.type.empty())return;
 
@@ -78,4 +88,12 @@ Focus::Focus(const AstNode& node){
 
     if(!rIdNode.type.empty())
         this->relativeId = QString::fromStdString(Parser::getValue(rIdNode).content);
+
+    foreach(const AstNode& node,preqNodes){
+        preReq.push_back(getFocusPreqs(node));
+        qDebug()<<"preqs:";
+        auto dbg=qDebug();
+        foreach(const QString &str,preReq.back())
+            dbg<<str;
+    }
 }

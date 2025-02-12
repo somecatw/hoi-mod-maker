@@ -3,6 +3,7 @@
 #include "focuseditor.h"
 #include "parser.h"
 #include "focusitem.h"
+#include "linewidgets.h"
 
 focustree::focustree(QWidget *parent)
     : QMainWindow(parent)
@@ -30,20 +31,47 @@ QGraphicsProxyWidget* focustree::getProxy(const QString& id) const{
     if(!proxies.count(id))return nullptr;
     return proxies.value(id);
 }
+
 void focustree::addFocusItem(const Focus& f){
     if(proxies.count(f.id))return;
 
     FocusItem *item = new FocusItem();
-    item->setId(f.id);
+    item->setup(f.id,this);
+
+    connect(this,&focustree::resetSelection,item,&FocusItem::deSelect);
 
     QGraphicsProxyWidget *proxy = this->treeScene->addWidget(item);
-    proxy->setPos({80.0*f.x, 100.0*f.y});
+    proxy->setPos({wgap*f.x, hgap*f.y});
     proxies.insert(f.id,proxy);
 
     if(f.relativeId.size()){
         addFocusItem(this->focusModel->data(f.relativeId));
         QGraphicsProxyWidget *rel = getProxy(f.relativeId);
-        proxy->setPos({80.0*f.x+rel->x(),100.0*f.y+rel->y()});
+        proxy->setPos({wgap*f.x+rel->x(),hgap*f.y+rel->y()});
+    }
+}
+QPointF toCenter(const QPointF &p){
+    return p+QPointF(focustree::wgap/2,focustree::hgap/2);
+}
+void focustree::addFocusPreqLine(const Focus &f){
+    foreach(const QVector<QString> &v,f.preReq){
+        foreach(const QString &str,v){
+            LineWidget *l;
+            if(v.size()==1)
+                l = new SolidLine();
+            else l = new DotLine();
+            QPointF p1 = toCenter(getProxy(str)->pos());
+            QPointF p2 = toCenter(getProxy(f.id)->pos());
+            l->setEnd(p2-p1);
+            auto proxy=treeScene->addWidget(l);
+
+            if(p2.x()>=p1.x())
+                proxy->setPos(QPointF(p1.x()-1,p1.y()));
+            else
+                proxy->setPos(QPointF(p2.x()-1,p1.y()));
+
+            proxy->setZValue(-100);
+        }
     }
 }
 
@@ -64,6 +92,10 @@ void focustree::on_actionopen_triggered()
     this->treeScene->clear();
     foreach(const Focus& f,this->focusModel->allData()){
         this->addFocusItem(f);
+    }
+
+    foreach(const Focus &f,this->focusModel->allData()){
+        this->addFocusPreqLine(f);
     }
 }
 

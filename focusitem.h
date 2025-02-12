@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QPainter>
+#include "focustree.h"
 
 namespace Ui {
 class FocusItem;
@@ -20,11 +21,14 @@ class FocusItem : public QWidget
 public:
     explicit FocusItem(QWidget *parent = nullptr);
     ~FocusItem();
-    void setId(const QString &id);
+    void setup(const QString &id,focustree *tr);
 
     // 对应国策的 id
     QString focusid;
-
+public slots:
+    void deSelect();
+signals:
+    void select();
 protected:
     void enterEvent(QEnterEvent *evt) override;
     void leaveEvent(QEvent *evt) override;
@@ -33,6 +37,11 @@ protected:
 private:
     Ui::FocusItem *ui;
     bool hovering;
+    bool frameEnabled;
+    bool selected;
+    QColor frameColor;
+    focustree *tree;
+    void drawFrame(QPainter *painter,const QColor& color);
 };
 
 #endif // FOCUSITEM_H
