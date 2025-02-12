@@ -13,12 +13,12 @@ FocusModel::FocusModel(QObject *parent)
     : QObject{parent}
 {}
 
-void FocusModel::init(const AstNode& node){
+bool FocusModel::init(const AstNode& node){
     const AstNode &tree = request(node,"focus_tree");
 
     if(tree.children.size()<=1||tree.children[1].children[1].type!="block"){
         qDebug()<<"Error: 'focus_tree' is not found or not a block";
-        return;
+        return false;
     }
 
     const AstNode& lst = tree.children[1].children[1];
@@ -32,12 +32,21 @@ void FocusModel::init(const AstNode& node){
     focuses.clear();
     foreach(const AstNode& node,v1)
         focuses.emplace_back(node);
+
+    foreach(const Focus& f,focuses)
+        if(!f.id.size())return false;
+    return true;
 }
 
-AstNode FocusModel::data(const QString& index){
-    return AstNode();
+Focus FocusModel::data(const QString& index) const {
+    foreach(const Focus& f,this->focuses)
+        if(f.id==index)return f;
+    return Focus();
 }
 
+const QVector<Focus>& FocusModel::allData() const{
+    return focuses;
+}
 
 
 Focus::Focus(){}

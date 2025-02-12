@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/resource">
+        <file>icon/focus_hover.png</file>
+    </qresource>
+</RCC>

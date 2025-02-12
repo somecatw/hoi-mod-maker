@@ -20,6 +20,7 @@ class FocusItem : public QWidget
 public:
     explicit FocusItem(QWidget *parent = nullptr);
     ~FocusItem();
+    void setId(const QString &id);
 
     // 对应国策的 id
     QString focusid;

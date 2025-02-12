@@ -27,8 +27,9 @@ class FocusModel : public QObject
     Q_OBJECT
 public:
     explicit FocusModel(QObject *parent = nullptr);
-    void init(const AstNode& node);
-    AstNode data(const QString& index);
+    bool init(const AstNode& node);
+    Focus data(const QString& index) const;
+    const QVector<Focus>& allData() const;
 private:
     QVector<Focus> focuses;
 signals:

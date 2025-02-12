@@ -5,8 +5,8 @@
 #include <QFileDialog>
 #include <QGraphicsView>
 #include <QWheelEvent>
+#include <QGraphicsProxyWidget>
 #include "focusmodel.h"
-
 
 namespace Ui {
 class focustree;
@@ -40,6 +40,12 @@ private:
     QGraphicsScene *treeScene;
     FocusTreeView *treeView;
     FocusModel *focusModel;
+    QMap<QString,QGraphicsProxyWidget*> proxies;
+
+    // 如果 id 已经存在，就直接 return
+    void addFocusItem(const Focus& f);
+
+    QGraphicsProxyWidget* getProxy(const QString& id) const;
 };
 
 #endif // FOCUSTREE_H
