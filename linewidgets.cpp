@@ -34,14 +34,15 @@ void SolidLine::paintEvent(QPaintEvent *evt){
     if(end.y()<0)return;
 
     QPainter painter(this);
-    QPen pen(Qt::gray);
+    painter.setClipping(false);
+    QPen pen(QColor(0x99,0x99,0x99,int(255*0.75)));
     pen.setWidth(2);
     painter.setPen(pen);
     painter.setBrush(Qt::NoBrush);
 
-    painter.drawLine(beginX(),0,beginX(),end.y()-focustree::hgap/2);
-    painter.drawLine(beginX(),end.y()-focustree::hgap/2,endX(),end.y()-focustree::hgap/2);
-    painter.drawLine(endX(),end.y()-focustree::hgap/2,endX(),end.y());
+    painter.drawLine(beginX(),0,beginX(),focustree::itemH/2);
+    painter.drawLine(beginX(),focustree::itemH/2,endX(),focustree::itemH/2);
+    painter.drawLine(endX(),focustree::itemH/2,endX(),end.y());
 }
 
 DotLine::DotLine(QWidget *parent)
@@ -51,24 +52,47 @@ void DotLine::paintEvent(QPaintEvent *evt){
     if(end.y()<0)return;
 
     QPainter painter(this);
-    QPen pen(Qt::gray);
+    painter.setClipping(false);
+    QPen pen(QColor(0x99,0x99,0x99,int(255*0.75)));
     pen.setWidth(2);
-    pen.setStyle(Qt::DashLine);
+    pen.setStyle(Qt::DotLine);
     painter.setPen(pen);
     painter.setBrush(Qt::NoBrush);
 
-    painter.drawLine(beginX(),0,beginX(),end.y()-focustree::hgap/2);
-    painter.drawLine(beginX(),end.y()-focustree::hgap/2,endX(),end.y()-focustree::hgap/2);
-    painter.drawLine(endX(),end.y()-focustree::hgap/2,endX(),end.y());
+    painter.drawLine(beginX(),0,beginX(),focustree::itemH/2);
+    painter.drawLine(beginX(),focustree::itemH/2,endX(),focustree::itemH/2);
+    painter.drawLine(endX(),focustree::itemH/2,endX(),end.y());
 }
 
 ExclusiveLine::ExclusiveLine(QWidget *parent)
     :LineWidget(parent){}
 
 void ExclusiveLine::setEnd(const QPointF &_end){
+    end=_end;
+    end.setY(0);
+}
 
+QSize ExclusiveLine::sizeHint() const{
+    return {int(abs(end.x())),h};
 }
 
 void ExclusiveLine::paintEvent(QPaintEvent *evt){
+    const int x1=focustree::itemW/2,
+        x2=end.x()/2-(20)/2,
+        x3=end.x()-focustree::itemW/2-6;
 
+    QPainter painter(this);
+    painter.setClipping(false);
+    QPen pen(QColor(0x99,0x99,0x99,int(255*0.75)));
+    pen.setWidth(2);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+    if(end.x()<100){
+        painter.drawImage(0,0,QImage(":/resource/icon/exclusive.png"));
+    }else{
+        painter.drawLine(x1,h/2+1,x3,h/2+1);
+        painter.drawImage(x2,0,QImage(":/resource/icon/exclusive.png"));
+        painter.drawImage(x1,6,QImage(":/resource/icon/exclusive_l.png"));
+        painter.drawImage(x3,6,QImage(":/resource/icon/exclusive_r.png"));
+    }
 }

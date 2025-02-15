@@ -70,6 +70,7 @@ void FocusItem::mousePressEvent(QMouseEvent *evt){
     selected=true;
     disconnect(tree,&focustree::resetSelection,this,&FocusItem::deSelect);
     emit tree->resetSelection();
+    tree->setPreqFrames(this->focusid);
     connect(tree,&focustree::resetSelection,this,&FocusItem::deSelect);
     update();
 }
@@ -81,5 +82,11 @@ void FocusItem::setup(const QString& id,focustree *tr){
 
 void FocusItem::deSelect(){
     selected=false;
+    frameEnabled=false;
     update();
+}
+
+void FocusItem::setFrame(const QColor &color){
+    frameEnabled=true;
+    frameColor=color;
 }

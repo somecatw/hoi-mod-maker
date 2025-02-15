@@ -18,6 +18,7 @@ public:
      * 这样就无需区分“加入前驱”和“加入可选前驱”了
      */
     QVector<QVector<QString>> preReq;
+    QVector<QString> excl;
     QString relativeId;
 
     QVector<AstNode> otherInfo;

@@ -22,6 +22,7 @@ public:
     explicit FocusItem(QWidget *parent = nullptr);
     ~FocusItem();
     void setup(const QString &id,focustree *tr);
+    void setFrame(const QColor &color);
 
     // 对应国策的 id
     QString focusid;

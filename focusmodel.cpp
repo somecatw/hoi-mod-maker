@@ -72,6 +72,7 @@ Focus::Focus(const AstNode& node){
     const AstNode &yNode    = Parser::getValue(request(lst,"y"));
     const AstNode &rIdNode  = Parser::getFirst(lst,"relative_position_id");
     const QVector<AstNode> &preqNodes = Parser::getAll(lst,"prerequisite");
+    const AstNode &exNode   = Parser::getFirst(lst,"mutually_exclusive");
 
     if(idNode.type.empty()||iconNode.type.empty()||xNode.type.empty()||yNode.type.empty())return;
 
@@ -89,6 +90,9 @@ Focus::Focus(const AstNode& node){
     if(!rIdNode.type.empty())
         this->relativeId = QString::fromStdString(Parser::getValue(rIdNode).content);
 
+    if(!exNode.type.empty())
+        this->excl=getFocusPreqs(exNode);
+
     foreach(const AstNode& node,preqNodes){
         preReq.push_back(getFocusPreqs(node));
         qDebug()<<"preqs:";
@@ -96,4 +100,9 @@ Focus::Focus(const AstNode& node){
         foreach(const QString &str,preReq.back())
             dbg<<str;
     }
+
+    auto dbg=qDebug();
+    dbg<<"mutually exclusives:";
+    foreach(const QString &str,this->excl)
+        dbg<<str;
 }

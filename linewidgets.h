@@ -39,8 +39,10 @@ protected:
 class ExclusiveLine : public LineWidget{
     Q_OBJECT
 public:
+    static constexpr int h=24;
     explicit ExclusiveLine(QWidget *parent = nullptr);
     void setEnd(const QPointF &_end) override;
+    QSize sizeHint()const override;
 protected:
     void paintEvent(QPaintEvent *evt) override;
 

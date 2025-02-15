@@ -51,7 +51,7 @@ void focustree::addFocusItem(const Focus& f){
     }
 }
 QPointF toCenter(const QPointF &p){
-    return p+QPointF(focustree::wgap/2,focustree::hgap/2);
+    return p+QPointF(focustree::itemW/2,focustree::itemH/2);
 }
 void focustree::addFocusPreqLine(const Focus &f){
     foreach(const QVector<QString> &v,f.preReq){
@@ -74,6 +74,55 @@ void focustree::addFocusPreqLine(const Focus &f){
         }
     }
 }
+void focustree::addFocusExLine(const Focus &f){
+    QVector<QGraphicsProxyWidget*> v;
+    foreach(const QString &str,f.excl){
+        if(this->exLineDeployed.count(str))return;
+        v.push_back(this->getProxy(str));
+        this->exLineDeployed.insert(str,true);
+    }
+    v.push_back(getProxy(f.id));
+    this->exLineDeployed.insert(f.id,true);
+
+    std::sort(v.begin(),v.end(),[](QGraphicsProxyWidget *a,QGraphicsProxyWidget *b){
+        return a->x()<b->x();
+    });
+
+    qDebug()<<v.size();
+    for(unsigned i=0;i+1<v.size();i++){
+        LineWidget *l = new ExclusiveLine();
+        QPointF p1 = toCenter(v[i]->pos());
+        QPointF p2 = toCenter(v[i+1]->pos());
+        l->setEnd(p2-p1);
+        auto proxy=treeScene->addWidget(l);
+        if(p2.x()>=p1.x())
+            proxy->setPos(QPointF(p1.x(),p1.y()-ExclusiveLine::h/2));
+        else
+            proxy->setPos(QPointF(p2.x(),p1.y()-ExclusiveLine::h/2));
+        proxy->setZValue(-100);
+    }
+}
+
+const FocusModel &focustree::model(){
+    return *focusModel;
+}
+void focustree::setPreqFrames(const QString &str){
+    const Focus &f=focusModel->data(str);
+    const QVector<QVector<QString>> &v=f.preReq;
+    for(unsigned i=0;i<v.size();i++)
+        foreach(const QString &str,v[i]){
+            QGraphicsProxyWidget *proxy = getProxy(str);
+            FocusItem *item = ((FocusItem*)(proxy->widget()));
+            item->setFrame(focustree::colorList[i]);
+        }
+
+    const QVector<QString> &m=f.excl;
+    foreach(const QString &str,m){
+        QGraphicsProxyWidget *proxy = getProxy(str);
+        FocusItem *item = ((FocusItem*)(proxy->widget()));
+        item->setFrame(0xff0000); // 红色代表互斥国策
+    }
+}
 
 // 导入
 void focustree::on_actionopen_triggered()
@@ -90,12 +139,20 @@ void focustree::on_actionopen_triggered()
     }
 
     this->treeScene->clear();
+    this->proxies.clear();
+    this->exLineDeployed.clear();
+
     foreach(const Focus& f,this->focusModel->allData()){
         this->addFocusItem(f);
     }
 
     foreach(const Focus &f,this->focusModel->allData()){
         this->addFocusPreqLine(f);
+    }
+
+    foreach(const Focus &f,this->focusModel->allData()){
+        if(f.excl.size())
+            this->addFocusExLine(f);
     }
 }
 
