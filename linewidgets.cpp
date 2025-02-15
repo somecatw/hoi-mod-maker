@@ -12,6 +12,7 @@ void LineWidget::setEnd(const QPointF& _end){
     //end   = QPointF(int(_end.x()/focustree::wgap)*focustree::wgap+focustree::wgap/2,
     //              int(_end.y()/focustree::hgap)*focustree::hgap+focustree::hgap/2);
     end=_end;
+    this->setMinimumWidth(end.x());
 }
 
 int LineWidget::beginX(){
@@ -70,6 +71,7 @@ ExclusiveLine::ExclusiveLine(QWidget *parent)
 void ExclusiveLine::setEnd(const QPointF &_end){
     end=_end;
     end.setY(0);
+    this->setMinimumWidth(end.x());
 }
 
 QSize ExclusiveLine::sizeHint() const{
@@ -84,6 +86,7 @@ void ExclusiveLine::paintEvent(QPaintEvent *evt){
     QPainter painter(this);
     painter.setClipping(false);
     QPen pen(QColor(0x99,0x99,0x99,int(255*0.75)));
+
     pen.setWidth(2);
     painter.setPen(pen);
     painter.setBrush(Qt::NoBrush);
