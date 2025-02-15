@@ -12,7 +12,7 @@ void LineWidget::setEnd(const QPointF& _end){
     //end   = QPointF(int(_end.x()/focustree::wgap)*focustree::wgap+focustree::wgap/2,
     //              int(_end.y()/focustree::hgap)*focustree::hgap+focustree::hgap/2);
     end=_end;
-    this->setMinimumWidth(end.x());
+    this->setMinimumWidth(abs(end.x()));
 }
 
 int LineWidget::beginX(){
