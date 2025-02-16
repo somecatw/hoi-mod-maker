@@ -12,8 +12,13 @@ public:
     QString icon;
     int x,y;
 
-    // 第一维是与，第二维是或
+    /* 一个国策可能会有多组前置国策，每组只要完成一个即可，即与-或的关系
+     * 在编辑国策时，每组前置国策用一种颜色显示
+     * 设置新的前置国策时，出现一个菜单，让用户选择把新的前置放到哪一组中
+     * 这样就无需区分“加入前驱”和“加入可选前驱”了
+     */
     QVector<QVector<QString>> preReq;
+    QVector<QString> excl;
     QString relativeId;
 
     QVector<AstNode> otherInfo;

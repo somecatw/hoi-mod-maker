@@ -7,6 +7,7 @@
 namespace Ui {
 class FocusItem;
 }
+class focustree;
 /*
  * 应有一个 FocusModel 用来放所有国策的信息
  * parser 读取文件 -> 生成 FocusModel 对象 -> 绑定到 FocusTree
@@ -20,19 +21,42 @@ class FocusItem : public QWidget
 public:
     explicit FocusItem(QWidget *parent = nullptr);
     ~FocusItem();
-    void setId(const QString &id);
-
+    void setup(const QString &id,focustree *tr);
+    void setFrame(const QColor &color);
+    void hide();
+    // 用来在右侧悬停时暂时显示国策
+    void reveal();
+    void unreveal();
+    int visiblePreqCount;
     // 对应国策的 id
     QString focusid;
-
+public slots:
+    void deSelect();
+    void preqHidden();
+    void preqShown();
+    void show();
+signals:
+    void select();
+    void hidden();
+    void hidden_with_id(const QString &id);
+    void shown();
+    void shown_with_id(const QString &id);
 protected:
     void enterEvent(QEnterEvent *evt) override;
     void leaveEvent(QEvent *evt) override;
     void paintEvent(QPaintEvent *evt) override;
     void mousePressEvent(QMouseEvent *evt) override;
+    void contextMenuEvent(QContextMenuEvent *evt) override;
 private:
     Ui::FocusItem *ui;
     bool hovering;
+    bool frameEnabled;
+    bool selected;
+    bool isHidden;
+    QMenu *menu;
+    QColor frameColor;
+    focustree *tree;
+    void drawFrame(QPainter *painter,const QColor& color);
 };
 
 #endif // FOCUSITEM_H

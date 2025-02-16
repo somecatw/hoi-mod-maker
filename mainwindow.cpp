@@ -24,7 +24,7 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::on_pushButton_4_clicked()
 {
-    //preset_add_point *a =new preset_add_point();
-    //a->show();
+    preset_add_point *a =new preset_add_point();
+    a->show();
 }
 

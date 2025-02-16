@@ -48,12 +48,23 @@ const QVector<Focus>& FocusModel::allData() const{
     return focuses;
 }
 
+QVector<QString> getFocusPreqs(const AstNode &term){
+    QVector<QString> ret;
+
+    const QVector<AstNode> &focusNodes = Parser::getAll(Parser::getValue(term),"focus");
+    foreach(const AstNode &node,focusNodes)
+        ret.push_back(QString::fromStdString(Parser::getValue(node).content));
+
+    return ret;
+}
 
 Focus::Focus(){}
 
 Focus::Focus(const AstNode& node){
     if(node.children.size()<=1||node.children[1].children[1].type!="block"){
-        qDebug()<<"Error: 'focus' is not a block";
+        if(node.children[0].content=="shared_focus")
+            qDebug()<<"Unknown shared focus"<<Parser::getValue(node).content<<"found";
+        else qDebug()<<"Error: 'focus' is not a block";
         return;
     }
     const AstNode &lst = Parser::getValue(node);
@@ -62,6 +73,8 @@ Focus::Focus(const AstNode& node){
     const AstNode &xNode    = Parser::getValue(request(lst,"x"));
     const AstNode &yNode    = Parser::getValue(request(lst,"y"));
     const AstNode &rIdNode  = Parser::getFirst(lst,"relative_position_id");
+    const QVector<AstNode> &preqNodes = Parser::getAll(lst,"prerequisite");
+    const AstNode &exNode   = Parser::getFirst(lst,"mutually_exclusive");
 
     if(idNode.type.empty()||iconNode.type.empty()||xNode.type.empty()||yNode.type.empty())return;
 
@@ -78,4 +91,20 @@ Focus::Focus(const AstNode& node){
 
     if(!rIdNode.type.empty())
         this->relativeId = QString::fromStdString(Parser::getValue(rIdNode).content);
+
+    if(!exNode.type.empty())
+        this->excl=getFocusPreqs(exNode);
+
+    foreach(const AstNode& node,preqNodes){
+        preReq.push_back(getFocusPreqs(node));
+        qDebug()<<"preqs:";
+        auto dbg=qDebug();
+        foreach(const QString &str,preReq.back())
+            dbg<<str;
+    }
+
+    auto dbg=qDebug();
+    dbg<<"mutually exclusives:";
+    foreach(const QString &str,this->excl)
+        dbg<<str;
 }

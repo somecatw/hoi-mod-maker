@@ -11,30 +11,41 @@ CONFIG += c++17
 SOURCES += \
     focuseditor.cpp \
     focusitem.cpp \
+    focuslistview.cpp \
     focusmodel.cpp \
     focustree.cpp \
     idea_editer.cpp \
+    linewidgets.cpp \
     main.cpp \
     mainwindow.cpp \
     parser.cpp \
-    preset_parser.cpp
+    preset.cpp \
+    preset_add_point.cpp \
+    preset_ideas.cpp
 
 HEADERS += \
     focuseditor.h \
     focusitem.h \
+    focuslistview.h \
     focusmodel.h \
     focustree.h \
     idea_editer.h \
+    linewidgets.h \
     mainwindow.h \
     parser.h \
-    preset_parser.h
+    preset.h \
+    preset_add_point.h \
+    preset_ideas.h
 
 FORMS += \
     focuseditor.ui \
     focusitem.ui \
+    focuslistview.ui \
     focustree.ui \
     idea_editer.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    preset_add_point.ui \
+    preset_ideas.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

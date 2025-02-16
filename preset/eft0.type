@@ -1,0 +1,80 @@
+稳定度修正 	 		
+stability_factor
+每周稳定度增长
+stability_weekly
+侵略战争稳定度修正
+offensive_war_stability_factor
+防御战争稳定度修正
+defensive_war_stability_factor
+战争支持度修正   		
+war_support_factor  
+每周战争支持度增长  	
+war_support_weekly  
+政治点数获取   		
+political_power_factor  
+每日获取 点政治点数 	
+political_power_gain  
+每日陆军经验增长  		
+e perience_gain_army  
+每日海军经验增长 		
+e perience_gain_navy  
+每日空军经验增长 		
+e perience_gain_air  
+陆军经验增长加成 		
+e perience_gain_army_factor  
+海军经验增长加成 		
+e perience_gain_navy_factor  
+空军经验增长加成 		
+e perience_gain_air_factor  
+指挥点上限增加 		
+ma _command_power  
+每日指挥点增长 		
+command_power_gain  
+指挥点增长加成  		
+command_power_gain_mult   
+每周人力 				
+weekly_manpower  
+每月人口增长修正  		
+monthly_population  
+适役人口  			
+conscription  
+陆军攻击修正  			
+army_attack_factor  
+陆军防御修正  			
+army_defence_factor  
+核心领土陆军攻击修正  	
+army_core_attack_factor  
+核心领土陆军防御修正  	
+army_core_defence_factor  
+科研速度加成      		
+research_speed_factor  
+生活消费品  			
+consumer_goods_factor  
+建造速度加成  			
+production_speed_buildings_factor  
+民工建造速度加成  		
+production_speed_industrial_comple _factor  
+基建建造速度加成  		
+production_speed_infrastructure_factor  
+军工建造速度加成  		
+production_speed_arms_factory_factor  
+海军船坞建造速度加成  	
+production_speed_dockyard_factor  
+铁路建造速度加成  		
+production_speed_rail_way_factor  
+补给中心建造速度加成  	
+production_speed_supply_node_factor  
+合成炼油厂建造速度加成  	
+production_speed_fuel_silo_factor  
+海岸要塞建造速度加成  	
+production_speed_coastal_bunker_factor  
+陆军要塞建造速度加成  	
+production_speed_bunker_factor  
+地区最大工业值加成  	
+global_building_slots_factor  
+工厂修复速度加成 		
+industry_repair_factor  
+正当化战争目标时长修正
+justify_war_goal_time  
+敌国正当化战争目标时长修正
+enemy_justify_war_goal_time  
