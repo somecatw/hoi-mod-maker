@@ -10,14 +10,35 @@ focustree::focustree(QWidget *parent)
 {
     focustreeui->setupUi(this);
     treeScene = new QGraphicsScene(this);
-    treeView = new FocusTreeView(treeScene, this);
+    treeView = new FocusTreeView(treeScene);
     this->setCentralWidget(treeView);
     this->focusModel = new FocusModel(this);
+    this->splitter = new QSplitter(this);
+    this->listView = new FocusListView();
+
+    connect(this,&focustree::focusHidden,this->listView,&FocusListView::addFocus);
+    connect(this->listView,&FocusListView::focusShown,this,&focustree::showFocus);
+    connect(this,&focustree::focusShown,this->listView,&FocusListView::showFocusWithoutSync);
+    connect(this->listView,&FocusListView::focusShownOnHover,this,&focustree::revealFocus);
+
+    splitter->addWidget(treeView);
+    splitter->addWidget(listView);
+    splitter->setCollapsible(0,false);
+    splitter->setCollapsible(1,false);
+    splitter->setMinimumSize({800,600});
+
+    this->setCentralWidget(splitter);
+    this->treeView->resize(int(size().width()*0.75),size().height());
 }
 
 focustree::~focustree()
 {
     delete focustreeui;
+}
+
+FocusItem *toItem(QGraphicsProxyWidget *w){
+    FocusItem *item = ((FocusItem*)(w->widget()));
+    return item;
 }
 
 void focustree::on_focusa_clicked()
@@ -42,6 +63,10 @@ QGraphicsProxyWidget* focustree::getProxy(const QString& id) const{
     return proxies.value(id);
 }
 
+void focustree::showFocus(const QString &id){
+    toItem(getProxy(id))->show();
+}
+
 void focustree::addFocusItem(const Focus& f){
     if(proxies.count(f.id))return;
 
@@ -50,6 +75,8 @@ void focustree::addFocusItem(const Focus& f){
     int rx=f.x,ry=f.y;
 
     connect(this,&focustree::resetSelection,item,&FocusItem::deSelect);
+    connect(item,&FocusItem::hidden_with_id,this,&focustree::focusHidden);
+    connect(item,&FocusItem::shown_with_id,this,&focustree::focusShown);
 
     QGraphicsProxyWidget *proxy = this->treeScene->addWidget(item);
     proxy->setPos({wgap*f.x, hgap*f.y});
@@ -67,10 +94,6 @@ void focustree::addFocusItem(const Focus& f){
 }
 QPointF toCenter(const QPointF &p){
     return p+QPointF(focustree::itemW/2,focustree::itemH/2);
-}
-FocusItem *toItem(QGraphicsProxyWidget *w){
-    FocusItem *item = ((FocusItem*)(w->widget()));
-    return item;
 }
 void focustree::addFocusPreqLine(const Focus &f){
     foreach(const QVector<QString> &v,f.preReq){
@@ -90,6 +113,8 @@ void focustree::addFocusPreqLine(const Focus &f){
 
             connect(toItem(getProxy(f.id)),&FocusItem::hidden,l,&BrokenLine::hide);
             connect(toItem(getProxy(str)),&FocusItem::hidden,l,&BrokenLine::hide);
+            connect(toItem(getProxy(f.id)),&FocusItem::shown,l,&BrokenLine::show);
+            connect(toItem(getProxy(str)),&FocusItem::shown,l,&BrokenLine::show);
 
             auto proxy=treeScene->addWidget(l);
 
@@ -101,6 +126,7 @@ void focustree::addFocusPreqLine(const Focus &f){
             proxy->setZValue(-100);
 
             connect(toItem(getProxy(str)),&FocusItem::hidden,toItem(getProxy(f.id)),&FocusItem::preqHidden);
+            connect(toItem(getProxy(str)),&FocusItem::shown,toItem(getProxy(f.id)),&FocusItem::preqShown);
         }
         toItem(getProxy(f.id))->visiblePreqCount+=v.size();
     }
@@ -129,6 +155,8 @@ void focustree::addFocusExLine(const Focus &f){
         l->setEnd(p2-p1);
         connect(toItem(getProxy(f.id)),&FocusItem::hidden_with_id,this,&focustree::updateExclusiveFocus);
         connect(toItem(getProxy(str)),&FocusItem::hidden_with_id,this,&focustree::updateExclusiveFocus);
+        connect(toItem(getProxy(f.id)),&FocusItem::shown_with_id,this,&focustree::updateExclusiveFocus);
+        connect(toItem(getProxy(str)),&FocusItem::shown_with_id,this,&focustree::updateExclusiveFocus);
 
         auto proxy=treeScene->addWidget(l);
         if(p2.x()>=p1.x())
@@ -216,11 +244,10 @@ void FocusTreeView::hideFocus(){
     }
 }
 
-void focustree::updateExclusiveFocus(const QString &name){
-    const Focus &f=this->focusModel->data(name);
+void focustree::removeFocusExLine(const Focus &f){
     foreach(const QString &str,f.excl){
         QGraphicsProxyWidget *w;
-        FocusItem *a=toItem(getProxy(name)),
+        FocusItem *a=toItem(getProxy(f.id)),
             *b=toItem(getProxy(str));
         if((w=getExclLine(a,b))){
             this->treeScene->removeItem(w);
@@ -229,9 +256,15 @@ void focustree::updateExclusiveFocus(const QString &name){
                 exclLines.remove({a,b});
             else exclLines.remove({b,a});
         }
+    }
+}
+
+void focustree::updateExclusiveFocus(const QString &name){
+    const Focus &f=this->focusModel->data(name);
+    foreach(const QString &str,f.excl){
+        removeFocusExLine(focusModel->data(str));
         addFocusExLine(focusModel->data(str));
     }
-    //exLineDeployed[name]=false;
 }
 
 bool focustree::xQuery(int x1,int x2,int y,std::function<bool(FocusItem*)> f)const{
@@ -257,4 +290,23 @@ bool focustree::yQuery(int y1,int y2,int x,std::function<bool(FocusItem*)> f)con
 QGraphicsProxyWidget* focustree::getExclLine(FocusItem *a,FocusItem *b)const{
     if(exclLines.contains({a,b}))return exclLines.value({a,b});
     else return exclLines.value({b,a});
+}
+
+void focustree::resizeEvent(QResizeEvent *evt){
+    this->treeView->setMinimumWidth(int(evt->size().width()*0.65));
+    QMainWindow::resizeEvent(evt);
+}
+
+void focustree::revealFocus(const QString &id){
+    static FocusItem *prevItem=nullptr;
+    if(!id.size()){
+        if(prevItem)prevItem->unreveal();
+        prevItem=nullptr;
+        return;
+    }
+    FocusItem *item=toItem(getProxy(id));
+    if(item!=prevItem && prevItem!=nullptr)prevItem->unreveal();
+    if(!item)return;
+    item->reveal();
+    prevItem=item;
 }

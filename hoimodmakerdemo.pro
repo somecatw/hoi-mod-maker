@@ -11,6 +11,7 @@ CONFIG += c++17
 SOURCES += \
     focuseditor.cpp \
     focusitem.cpp \
+    focuslistview.cpp \
     focusmodel.cpp \
     focustree.cpp \
     idea_editer.cpp \
@@ -25,6 +26,7 @@ SOURCES += \
 HEADERS += \
     focuseditor.h \
     focusitem.h \
+    focuslistview.h \
     focusmodel.h \
     focustree.h \
     idea_editer.h \
@@ -38,6 +40,7 @@ HEADERS += \
 FORMS += \
     focuseditor.ui \
     focusitem.ui \
+    focuslistview.ui \
     focustree.ui \
     idea_editer.ui \
     mainwindow.ui \

@@ -37,8 +37,6 @@ void FocusItem::leaveEvent(QEvent *evt){
 }
 
 void FocusItem::paintEvent(QPaintEvent *evt){
-    if(isHidden)return;
-
     QPainter painter(this);
     painter.setBrush(Qt::gray);
     painter.drawEllipse({40,20},15,15);
@@ -60,8 +58,6 @@ void FocusItem::paintEvent(QPaintEvent *evt){
 }
 
 void FocusItem::drawFrame(QPainter *painter,const QColor& color){
-    //if(isHidden)return;
-
     painter->setBrush(QBrush(color));
     painter->setPen(Qt::NoPen);
 
@@ -109,6 +105,7 @@ void FocusItem::setFrame(const QColor &color){
 }
 
 void FocusItem::hide(){
+    if(isHidden)return;
     isHidden=true;
     setVisible(false);
     update();
@@ -119,4 +116,26 @@ void FocusItem::hide(){
 void FocusItem::preqHidden(){
     visiblePreqCount--;
     if(!visiblePreqCount)hide();
+}
+
+void FocusItem::preqShown(){
+    visiblePreqCount++;
+    if(visiblePreqCount==1)show();
+}
+
+void FocusItem::show(){
+    if(!isHidden)return;
+    isHidden=false;
+    setVisible(true);
+    update();
+    emit shown();
+    emit shown_with_id(focusid);
+}
+void FocusItem::reveal(){
+    setVisible(true);
+    update();
+}
+void FocusItem::unreveal(){
+    setVisible(false);
+    update();
 }

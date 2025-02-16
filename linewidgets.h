@@ -17,8 +17,6 @@ public:
 
 protected:
     QPointF end;
-public slots:
-    void hide();
 };
 
 class BrokenLine : public LineWidget{
@@ -31,6 +29,11 @@ protected:
     void paintEvent(QPaintEvent *evt) override;
     virtual QPen getPen() const = 0;
     bool type;
+    int visibleEndCount;
+
+public slots:
+    void hide();
+    void show();
 };
 
 class SolidLine : public BrokenLine{

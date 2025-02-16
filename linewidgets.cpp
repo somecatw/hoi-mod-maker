@@ -23,8 +23,13 @@ int LineWidget::endX(){
     if(end.x()>=0)return end.x()+1;
     else return 1;
 }
-void LineWidget::hide(){
+void BrokenLine::hide(){
+    visibleEndCount--;
     setVisible(false);
+}
+void BrokenLine::show(){
+    visibleEndCount++;
+    if(visibleEndCount==2)setVisible(true);
 }
 QSize LineWidget::sizeHint() const{
     return {int(abs(end.x()))+2,int(end.y())};
@@ -86,6 +91,7 @@ void ExclusiveLine::paintEvent(QPaintEvent *evt){
 
 BrokenLine::BrokenLine(QWidget *parent,bool _type):LineWidget(parent){
     type=_type;
+    visibleEndCount=2;
 }
 void BrokenLine::paintEvent(QPaintEvent *evt){
     if(end.y()<0)return;

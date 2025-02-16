@@ -6,9 +6,10 @@
 #include <QGraphicsView>
 #include <QWheelEvent>
 #include <QGraphicsProxyWidget>
+#include <QSplitter>
 #include "focusmodel.h"
 #include "focusitem.h"
-#include "linewidgets.h"
+#include "focuslistview.h"
 
 namespace Ui {
 class focustree;
@@ -52,17 +53,27 @@ public:
     const FocusModel &model();
     void setPreqFrames(const QString& str);
 
+protected:
+    void resizeEvent(QResizeEvent *evt) override;
+
 signals:
     void resetSelection();
+    void focusHidden(const QString &id);
+    void focusShown(const QString &id);
 
+public slots:
+    void showFocus(const QString &id);
 
 private slots:
     void on_focusa_clicked();
     void updateExclusiveFocus(const QString &name);
     void on_actionopen_triggered();
+    void revealFocus(const QString &id);
 
 private:
     Ui::focustree *focustreeui;
+    QSplitter *splitter;
+    FocusListView *listView;
     QGraphicsScene *treeScene;
     FocusTreeView *treeView;
     FocusModel *focusModel;
@@ -76,6 +87,7 @@ private:
 
     void addFocusPreqLine(const Focus& f);
     void addFocusExLine(const Focus& f);
+    void removeFocusExLine(const Focus &f);
     QGraphicsProxyWidget* getProxy(const QString& id) const;
 
     bool xQuery(int x1,int x2,int y,std::function<bool(FocusItem*)> f)const;
