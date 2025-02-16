@@ -1,6 +1,9 @@
 <RCC>
     <qresource prefix="/resource">
         <file>icon/focus_hover.png</file>
+        <file>icon/exclusive.png</file>
+        <file>icon/exclusive_l.png</file>
+        <file>icon/exclusive_r.png</file>
     </qresource>
     <qresource prefix="/">
         <file>preset/alltype.txt</file>

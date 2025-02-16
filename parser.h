@@ -48,7 +48,7 @@ public:
     // 处理文件并返回文件对应的节点（如果匹配不上，会返回 type=fail）
     static AstNode parse(QString filename);
 
-    // 在 node 的子节点中寻找满足条件的 key （输入 node 必须是 file 或者 block）
+    // 在 node 的子节点中寻找满足条件的 key, 返回这一 term （输入 node 必须是 file 或者 block）
     static AstNode getFirst(const AstNode &node, QString key);
     static QVector<AstNode> getAll(const AstNode &node, QString key);
     static QVector<AstNode> getAllExcept(const AstNode &node, QVector<QString> keys_excluded);
