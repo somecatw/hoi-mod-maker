@@ -62,7 +62,9 @@ Focus::Focus(){}
 
 Focus::Focus(const AstNode& node){
     if(node.children.size()<=1||node.children[1].children[1].type!="block"){
-        qDebug()<<"Error: 'focus' is not a block";
+        if(node.children[0].content=="shared_focus")
+            qDebug()<<"Unknown shared focus"<<Parser::getValue(node).content<<"found";
+        else qDebug()<<"Error: 'focus' is not a block";
         return;
     }
     const AstNode &lst = Parser::getValue(node);

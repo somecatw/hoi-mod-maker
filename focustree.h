@@ -7,6 +7,8 @@
 #include <QWheelEvent>
 #include <QGraphicsProxyWidget>
 #include "focusmodel.h"
+#include "focusitem.h"
+#include "linewidgets.h"
 
 namespace Ui {
 class focustree;
@@ -15,11 +17,18 @@ class focustree;
 // 造一个容器用来放 FocusItem, 方便实现拖动、缩放国策树
 class FocusTreeView : public QGraphicsView
 {
+    Q_OBJECT
 public:
     FocusTreeView(QGraphicsScene *scene, QWidget *parent=nullptr);
 
 protected:
     void wheelEvent(QWheelEvent *evt) override;
+    void contextMenuEvent(QContextMenuEvent *evt) override;
+private:
+    QMenu *menu;
+    FocusItem *selectedItem;
+public slots:
+    void hideFocus();
 };
 
 class focustree : public QMainWindow
@@ -49,7 +58,7 @@ signals:
 
 private slots:
     void on_focusa_clicked();
-
+    void updateExclusiveFocus(const QString &name);
     void on_actionopen_triggered();
 
 private:
@@ -58,7 +67,9 @@ private:
     FocusTreeView *treeView;
     FocusModel *focusModel;
     QMap<QString,QGraphicsProxyWidget*> proxies;
-    QMap<QString,bool> exLineDeployed;
+    QMap<QString,QPoint> displayPos;
+    QMap<std::pair<int,int>,QVector<FocusItem*>> focusGrid;
+    QMap<QPair<FocusItem*,FocusItem*>,QGraphicsProxyWidget*> exclLines;
 
     // 如果 id 已经存在，就直接 return
     void addFocusItem(const Focus& f);
@@ -67,6 +78,9 @@ private:
     void addFocusExLine(const Focus& f);
     QGraphicsProxyWidget* getProxy(const QString& id) const;
 
+    bool xQuery(int x1,int x2,int y,std::function<bool(FocusItem*)> f)const;
+    bool yQuery(int y1,int y2,int x,std::function<bool(FocusItem*)> f)const;
+    QGraphicsProxyWidget *getExclLine(FocusItem *a,FocusItem *b)const;
 };
 
 #endif // FOCUSTREE_H

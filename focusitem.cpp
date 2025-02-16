@@ -1,5 +1,7 @@
 #include "focusitem.h"
 #include "ui_focusitem.h"
+#include "focustree.h"
+#include <QMenu>
 
 FocusItem::FocusItem(QWidget *parent)
     : QWidget(parent)
@@ -9,12 +11,19 @@ FocusItem::FocusItem(QWidget *parent)
     hovering=false;
     frameEnabled=false;
     selected=false;
+    isHidden=false;
+    visiblePreqCount=0;
     setAttribute(Qt::WA_TranslucentBackground);
 }
 
 FocusItem::~FocusItem()
 {
     delete ui;
+}
+
+void FocusItem::contextMenuEvent(QContextMenuEvent *evt){
+    menu->exec(QCursor::pos());
+    qDebug()<<999;
 }
 
 void FocusItem::enterEvent(QEnterEvent *evt){
@@ -28,6 +37,8 @@ void FocusItem::leaveEvent(QEvent *evt){
 }
 
 void FocusItem::paintEvent(QPaintEvent *evt){
+    if(isHidden)return;
+
     QPainter painter(this);
     painter.setBrush(Qt::gray);
     painter.drawEllipse({40,20},15,15);
@@ -49,6 +60,8 @@ void FocusItem::paintEvent(QPaintEvent *evt){
 }
 
 void FocusItem::drawFrame(QPainter *painter,const QColor& color){
+    //if(isHidden)return;
+
     painter->setBrush(QBrush(color));
     painter->setPen(Qt::NoPen);
 
@@ -67,12 +80,16 @@ void FocusItem::drawFrame(QPainter *painter,const QColor& color){
 }
 
 void FocusItem::mousePressEvent(QMouseEvent *evt){
-    selected=true;
-    disconnect(tree,&focustree::resetSelection,this,&FocusItem::deSelect);
-    emit tree->resetSelection();
-    tree->setPreqFrames(this->focusid);
-    connect(tree,&focustree::resetSelection,this,&FocusItem::deSelect);
-    update();
+    if(evt->button()==Qt::LeftButton){
+        selected=true;
+        disconnect(tree,&focustree::resetSelection,this,&FocusItem::deSelect);
+        emit tree->resetSelection();
+        tree->setPreqFrames(this->focusid);
+        connect(tree,&focustree::resetSelection,this,&FocusItem::deSelect);
+        update();
+    }else if(evt->button()==Qt::RightButton){
+
+    }
 }
 
 void FocusItem::setup(const QString& id,focustree *tr){
@@ -89,4 +106,17 @@ void FocusItem::deSelect(){
 void FocusItem::setFrame(const QColor &color){
     frameEnabled=true;
     frameColor=color;
+}
+
+void FocusItem::hide(){
+    isHidden=true;
+    setVisible(false);
+    update();
+    emit hidden();
+    emit hidden_with_id(focusid);
+}
+
+void FocusItem::preqHidden(){
+    visiblePreqCount--;
+    if(!visiblePreqCount)hide();
 }

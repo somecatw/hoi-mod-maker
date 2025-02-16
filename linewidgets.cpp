@@ -23,46 +23,30 @@ int LineWidget::endX(){
     if(end.x()>=0)return end.x()+1;
     else return 1;
 }
-
+void LineWidget::hide(){
+    setVisible(false);
+}
 QSize LineWidget::sizeHint() const{
     return {int(abs(end.x()))+2,int(end.y())};
 }
 
-SolidLine::SolidLine(QWidget *parent)
-    :LineWidget(parent){}
+SolidLine::SolidLine(QWidget *parent,bool _type)
+    :BrokenLine(parent){type=_type;}
 
-void SolidLine::paintEvent(QPaintEvent *evt){
-    if(end.y()<0)return;
-
-    QPainter painter(this);
-    painter.setClipping(false);
+QPen SolidLine::getPen()const{
     QPen pen(QColor(0x99,0x99,0x99,int(255*0.75)));
     pen.setWidth(2);
-    painter.setPen(pen);
-    painter.setBrush(Qt::NoBrush);
-
-    painter.drawLine(beginX(),0,beginX(),focustree::itemH/2);
-    painter.drawLine(beginX(),focustree::itemH/2,endX(),focustree::itemH/2);
-    painter.drawLine(endX(),focustree::itemH/2,endX(),end.y());
+    return pen;
 }
 
-DotLine::DotLine(QWidget *parent)
-    :LineWidget(parent){}
+DotLine::DotLine(QWidget *parent,bool _type)
+    :BrokenLine(parent){type=_type;}
 
-void DotLine::paintEvent(QPaintEvent *evt){
-    if(end.y()<0)return;
-
-    QPainter painter(this);
-    painter.setClipping(false);
+QPen DotLine::getPen()const{
     QPen pen(QColor(0x99,0x99,0x99,int(255*0.75)));
     pen.setWidth(2);
     pen.setStyle(Qt::DotLine);
-    painter.setPen(pen);
-    painter.setBrush(Qt::NoBrush);
-
-    painter.drawLine(beginX(),0,beginX(),focustree::itemH/2);
-    painter.drawLine(beginX(),focustree::itemH/2,endX(),focustree::itemH/2);
-    painter.drawLine(endX(),focustree::itemH/2,endX(),end.y());
+    return pen;
 }
 
 ExclusiveLine::ExclusiveLine(QWidget *parent)
@@ -71,7 +55,7 @@ ExclusiveLine::ExclusiveLine(QWidget *parent)
 void ExclusiveLine::setEnd(const QPointF &_end){
     end=_end;
     end.setY(0);
-    this->setMinimumWidth(end.x());
+    this->setMinimumWidth(abs(end.x()));
 }
 
 QSize ExclusiveLine::sizeHint() const{
@@ -91,11 +75,32 @@ void ExclusiveLine::paintEvent(QPaintEvent *evt){
     painter.setPen(pen);
     painter.setBrush(Qt::NoBrush);
     if(end.x()<100){
-        painter.drawImage(0,0,QImage(":/resource/icon/exclusive.png"));
+        painter.drawImage(x1,0,QImage(":/resource/icon/exclusive.png"));
     }else{
         painter.drawLine(x1,h/2+1,x3,h/2+1);
         painter.drawImage(x2,0,QImage(":/resource/icon/exclusive.png"));
         painter.drawImage(x1,6,QImage(":/resource/icon/exclusive_l.png"));
         painter.drawImage(x3,6,QImage(":/resource/icon/exclusive_r.png"));
     }
+}
+
+BrokenLine::BrokenLine(QWidget *parent,bool _type):LineWidget(parent){
+    type=_type;
+}
+void BrokenLine::paintEvent(QPaintEvent *evt){
+    if(end.y()<0)return;
+
+    QPainter painter(this);
+    painter.setClipping(false);
+    QPen pen=getPen();
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+
+    double midy=(type?end.y()-focustree::itemH/2:focustree::itemH/2);
+    painter.drawLine(beginX(),0,beginX(),midy);
+    painter.drawLine(beginX(),midy,endX(),midy);
+    painter.drawLine(endX(),midy,endX(),end.y());
+}
+void BrokenLine::setType(bool _type){
+    type=_type;
 }

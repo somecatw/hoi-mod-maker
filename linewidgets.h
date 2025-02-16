@@ -17,23 +17,36 @@ public:
 
 protected:
     QPointF end;
-signals:
+public slots:
+    void hide();
 };
 
-class SolidLine : public LineWidget{
+class BrokenLine : public LineWidget{
     Q_OBJECT
 public:
-    explicit SolidLine(QWidget *parent = nullptr);
+    explicit BrokenLine(QWidget *parent = nullptr,bool _type=0);
+    void setType(bool _type);
+
 protected:
     void paintEvent(QPaintEvent *evt) override;
+    virtual QPen getPen() const = 0;
+    bool type;
 };
 
-class DotLine : public LineWidget{
+class SolidLine : public BrokenLine{
     Q_OBJECT
 public:
-    explicit DotLine(QWidget *parent = nullptr);
+    explicit SolidLine(QWidget *parent = nullptr,bool _type=0);
 protected:
-    void paintEvent(QPaintEvent *evt) override;
+    QPen getPen()const override;
+};
+
+class DotLine : public BrokenLine{
+    Q_OBJECT
+public:
+    explicit DotLine(QWidget *parent = nullptr,bool _type=0);
+protected:
+    QPen getPen()const override;
 };
 
 class ExclusiveLine : public LineWidget{
