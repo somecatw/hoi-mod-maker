@@ -41,7 +41,8 @@ FORMS += \
     focuslistview.ui \
     focustree.ui \
     idea_editer.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    preset_ideas.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
