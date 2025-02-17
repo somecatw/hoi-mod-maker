@@ -19,7 +19,6 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     parser.cpp \
-    preset_add_point.cpp \
     preset_ideas.cpp \
     preset_parser.cpp
 
@@ -33,7 +32,6 @@ HEADERS += \
     linewidgets.h \
     mainwindow.h \
     parser.h \
-    preset_add_point.h \
     preset_ideas.h \
     preset_parser.h
 
@@ -43,8 +41,7 @@ FORMS += \
     focuslistview.ui \
     focustree.ui \
     idea_editer.ui \
-    mainwindow.ui \
-    preset_add_point.ui
+    mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
