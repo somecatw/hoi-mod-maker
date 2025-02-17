@@ -5,4 +5,12 @@
         <file>icon/exclusive_l.png</file>
         <file>icon/exclusive_r.png</file>
     </qresource>
+    <qresource prefix="/">
+        <file>preset/alltype.txt</file>
+        <file>preset/bt0.type</file>
+        <file>preset/eft0.type</file>
+        <file>preset/focus_effect_preset.txt</file>
+        <file>preset/idea_effect_preset.txt</file>
+        <file>preset/partyname.txt</file>
+    </qresource>
 </RCC>
