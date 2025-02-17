@@ -19,9 +19,9 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     parser.cpp \
-    preset.cpp \
     preset_add_point.cpp \
-    preset_ideas.cpp
+    preset_ideas.cpp \
+    preset_parser.cpp
 
 HEADERS += \
     focuseditor.h \
@@ -33,9 +33,9 @@ HEADERS += \
     linewidgets.h \
     mainwindow.h \
     parser.h \
-    preset.h \
     preset_add_point.h \
-    preset_ideas.h
+    preset_ideas.h \
+    preset_parser.h
 
 FORMS += \
     focuseditor.ui \
@@ -44,8 +44,7 @@ FORMS += \
     focustree.ui \
     idea_editer.ui \
     mainwindow.ui \
-    preset_add_point.ui \
-    preset_ideas.ui
+    preset_add_point.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
