@@ -109,6 +109,7 @@ void FocusItem::hide(){
     isHidden=true;
     setVisible(false);
     update();
+    qDebug()<<focusid<<"is hidden";
     emit hidden();
     emit hidden_with_id(focusid);
 }
@@ -128,6 +129,7 @@ void FocusItem::show(){
     isHidden=false;
     setVisible(true);
     update();
+    qDebug()<<focusid<<"is shown";
     emit shown();
     emit shown_with_id(focusid);
 }

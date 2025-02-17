@@ -14,11 +14,11 @@ focustree::focustree(QWidget *parent)
     this->setCentralWidget(treeView);
     this->focusModel = new FocusModel(this);
     this->splitter = new QSplitter(this);
-    this->listView = new FocusListView();
+    this->listView = new FocusListView(this);
 
     connect(this,&focustree::focusHidden,this->listView,&FocusListView::addFocus);
-    connect(this->listView,&FocusListView::focusShown,this,&focustree::showFocus);
-    connect(this,&focustree::focusShown,this->listView,&FocusListView::showFocusWithoutSync);
+    connect(this->listView,&FocusListView::focusRemoved,this,&focustree::showFocus);
+    connect(this,&focustree::focusShown,this->listView,&FocusListView::removeFocusWithoutSync);
     connect(this->listView,&FocusListView::focusShownOnHover,this,&focustree::revealFocus);
 
     splitter->addWidget(treeView);
@@ -133,9 +133,9 @@ void focustree::addFocusPreqLine(const Focus &f){
 }
 void focustree::addFocusExLine(const Focus &f){
     qDebug()<<f.id;
+    if(!toItem(getProxy(f.id))->isVisible())return;
     foreach(const QString &str,f.excl){
         if(!toItem(getProxy(str))->isVisible())continue;
-        if(!toItem(getProxy(f.id))->isVisible())continue;
 
         const Focus &t=focusModel->data(str);
 
@@ -153,10 +153,10 @@ void focustree::addFocusExLine(const Focus &f){
         if(p1.x()>p2.x())std::swap(p1,p2);
 
         l->setEnd(p2-p1);
-        connect(toItem(getProxy(f.id)),&FocusItem::hidden_with_id,this,&focustree::updateExclusiveFocus);
-        connect(toItem(getProxy(str)),&FocusItem::hidden_with_id,this,&focustree::updateExclusiveFocus);
-        connect(toItem(getProxy(f.id)),&FocusItem::shown_with_id,this,&focustree::updateExclusiveFocus);
-        connect(toItem(getProxy(str)),&FocusItem::shown_with_id,this,&focustree::updateExclusiveFocus);
+        connect(toItem(getProxy(f.id)),&FocusItem::hidden_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
+        connect(toItem(getProxy(str)),&FocusItem::hidden_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
+        connect(toItem(getProxy(f.id)),&FocusItem::shown_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
+        connect(toItem(getProxy(str)),&FocusItem::shown_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
 
         auto proxy=treeScene->addWidget(l);
         if(p2.x()>=p1.x())
@@ -260,6 +260,7 @@ void focustree::removeFocusExLine(const Focus &f){
 }
 
 void focustree::updateExclusiveFocus(const QString &name){
+    //qDebug()<<name<<"is hidden or shown";
     const Focus &f=this->focusModel->data(name);
     foreach(const QString &str,f.excl){
         removeFocusExLine(focusModel->data(str));
@@ -309,4 +310,13 @@ void focustree::revealFocus(const QString &id){
     if(!item)return;
     item->reveal();
     prevItem=item;
+}
+
+bool focustree::noPreqHidden(const QString &id){
+    foreach(const QVector<QString> &v,focusModel->data(id).preReq){
+        foreach(const QString &str,v){
+            if(!toItem(getProxy(str))->isVisible())return false;
+        }
+    }
+    return true;
 }

@@ -5,6 +5,7 @@
 #include <QListView>
 #include <QStringListModel>
 #include <QMenu>
+#include <QStyledItemDelegate>
 
 namespace Ui {
 class FocusListView;
@@ -23,12 +24,28 @@ protected:
     void mouseMoveEvent(QMouseEvent *evt) override;
 };
 
+class focustree;
+
+class ExtendedItemDelegate : public QStyledItemDelegate{
+    Q_OBJECT
+public:
+    explicit ExtendedItemDelegate(focustree *tree,QObject *parent = nullptr);
+    void paint(QPainter *painter,const QStyleOptionViewItem &opt,const QModelIndex &index)const override;
+private:
+    mutable QMap<QString,bool> noPreqHidden;
+    mutable int updatedCount;
+    focustree *tree;
+    void checkoutPreq(const QModelIndex &index) const;
+public slots:
+    void preqChanged();
+};
+
 class FocusListView : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit FocusListView(QWidget *parent = nullptr);
+    explicit FocusListView(focustree *tree,QWidget *parent = nullptr);
     ~FocusListView();
 protected:
     void contextMenuEvent(QContextMenuEvent *evt) override;
@@ -37,17 +54,19 @@ protected:
 
 public slots:
     void addFocus(const QString &id);
-    void showFocus();
-    void showFocusWithoutSync(const QString &id);
+    void removeFocus();
+    void removeFocusWithoutSync(const QString &id);
     void focusHovering(const QModelIndex& index);
 
 signals:
-    void focusShown(const QString &str);
+    void focusAdded();
+    void focusRemoved(const QString &str);
     void focusShownOnHover(const QString &str);
 
 private:
     Ui::FocusListView *ui;
     ExtendedListView *view;
+    ExtendedItemDelegate *delegate;
     QStringListModel *lst;
     QMenu *menu;
     QModelIndex selectedIdx;

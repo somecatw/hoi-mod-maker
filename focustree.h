@@ -52,6 +52,7 @@ public:
 
     const FocusModel &model();
     void setPreqFrames(const QString& str);
+    bool noPreqHidden(const QString &str);
 
 protected:
     void resizeEvent(QResizeEvent *evt) override;
