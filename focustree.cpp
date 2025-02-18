@@ -21,6 +21,8 @@ focustree::focustree(QWidget *parent)
     connect(this,&focustree::focusShown,this->listView,&FocusListView::removeFocusWithoutSync);
     connect(this->listView,&FocusListView::focusShownOnHover,this,&focustree::revealFocus);
 
+    connect(this->focusModel,&FocusModel::focusMoved,this,&focustree::handleFocusMove);
+
     splitter->addWidget(treeView);
     splitter->addWidget(listView);
     splitter->setCollapsible(0,false);
@@ -50,14 +52,42 @@ void focustree::on_focusa_clicked()
 }
 
 void FocusTreeView::contextMenuEvent(QContextMenuEvent *evt){
-    QGraphicsItem *item=this->itemAt(mapFromGlobal(evt->globalPos()));
-    if(!item)return;
-    QGraphicsProxyWidget *w=dynamic_cast<QGraphicsProxyWidget*>(item);
-    if(!w)return;
-    FocusItem *t=dynamic_cast<FocusItem*>(w->widget());
-    if(!t)return;
-    selectedItem=t;
+    FocusItem *t=getFocusAtGlobalPos(evt->globalPos());
+    if(t)menuTargetItem=t;
     menu->exec(evt->globalPos());
+}
+
+void FocusTreeView::mousePressEvent(QMouseEvent *evt){
+    FocusItem *t=getFocusAtGlobalPos(evt->globalPosition().toPoint());
+    if(t) moveTargetItem=t;
+    QGraphicsView::mousePressEvent(evt);
+}
+
+void FocusTreeView::mouseMoveEvent(QMouseEvent *evt){
+    if(moveTargetItem){
+        QPointF localpos=mapToScene(mapFromGlobal(evt->globalPosition()).toPoint());
+        int nx=localpos.x()/focustree::wgap;
+        int ny=localpos.y()/focustree::hgap;
+        ny=tree->limitY(moveTargetItem,ny);
+        if(QPoint(nx,ny)!=moveTargetItem->displayPos)
+            moveTargetItem->moveTo(nx,ny);
+    }
+    QGraphicsView::mouseMoveEvent(evt);
+}
+
+void FocusTreeView::mouseReleaseEvent(QMouseEvent *evt){
+    // FocusItem *t=getFocusAtGlobalPos(evt->globalPosition().toPoint());
+    if(moveTargetItem) moveTargetItem=nullptr;
+    QGraphicsView::mouseReleaseEvent(evt);
+}
+FocusItem *FocusTreeView::getFocusAtGlobalPos(const QPoint &p)const{
+    QGraphicsItem *item=this->itemAt(mapFromGlobal(p));
+    if(!item)return nullptr;
+    QGraphicsProxyWidget *w=dynamic_cast<QGraphicsProxyWidget*>(item);
+    if(!w)return nullptr;
+    FocusItem *t=dynamic_cast<FocusItem*>(w->widget());
+    if(!t)return nullptr;
+    return t;
 }
 
 QGraphicsProxyWidget* focustree::getProxy(const QString& id) const{
@@ -93,20 +123,26 @@ void focustree::addFocusItem(const Focus& f){
         ry+=round(rel->y()/hgap);
     }
     focusGrid[std::pair<int,int>(rx,ry)].push_back(item);
-    displayPos.insert(f.id,{rx,ry});
+    // displayPos.insert(f.id,{rx,ry});
+    item->displayPos=QPoint(rx,ry);
 }
 QPointF toCenter(const QPointF &p){
     return p+QPointF(focustree::itemW/2,focustree::itemH/2);
 }
 void focustree::addFocusPreqLine(const Focus &f){
     foreach(const QVector<QString> &v,f.preReq){
+        FocusItem *curr=toItem(getProxy(f.id));
         foreach(const QString &str,v){
             BrokenLine *l;
             if(v.size()==1)
                 l = new SolidLine();
             else l = new DotLine();
 
-            if(yQuery(displayPos[str].y(),displayPos[f.id].y(),displayPos[f.id].x(),[](FocusItem* x){
+            FocusItem *preq=toItem(getProxy(str));
+            preq->postItems.push_back(curr);
+            curr->preqItems.push_back(preq);
+
+            if(yQuery(preq->displayPos.y(),curr->displayPos.y(),curr->displayPos.x(),[](FocusItem* x){
                     return x->isVisible();
                 }))l->setType(1);
 
@@ -114,12 +150,15 @@ void focustree::addFocusPreqLine(const Focus &f){
             QPointF p2 = toCenter(getProxy(f.id)->pos());
             l->setEnd(p2-p1);
 
-            connect(toItem(getProxy(f.id)),&FocusItem::hidden,l,&BrokenLine::hide);
-            connect(toItem(getProxy(str)),&FocusItem::hidden,l,&BrokenLine::hide);
-            connect(toItem(getProxy(f.id)),&FocusItem::shown,l,&BrokenLine::show);
-            connect(toItem(getProxy(str)),&FocusItem::shown,l,&BrokenLine::show);
+            connect(curr,&FocusItem::hidden,l,&BrokenLine::hide);
+            connect(preq,&FocusItem::hidden,l,&BrokenLine::hide);
+            connect(curr,&FocusItem::shown,l,&BrokenLine::show);
+            connect(preq,&FocusItem::shown,l,&BrokenLine::show);
+            connect(curr,&FocusItem::moved,l,&BrokenLine::moveEnd);
+            connect(preq,&FocusItem::moved,l,&BrokenLine::moveStart);
 
             auto proxy=treeScene->addWidget(l);
+            l->proxy=proxy;
 
             if(p2.x()>=p1.x())
                 proxy->setPos(QPointF(p1.x()-1,p1.y()));
@@ -128,10 +167,10 @@ void focustree::addFocusPreqLine(const Focus &f){
 
             proxy->setZValue(-100);
 
-            connect(toItem(getProxy(str)),&FocusItem::hidden,toItem(getProxy(f.id)),&FocusItem::preqHidden);
-            connect(toItem(getProxy(str)),&FocusItem::shown,toItem(getProxy(f.id)),&FocusItem::preqShown);
+            connect(preq,&FocusItem::hidden,curr,&FocusItem::preqHidden);
+            connect(preq,&FocusItem::shown,curr,&FocusItem::preqShown);
         }
-        toItem(getProxy(f.id))->visiblePreqCount+=v.size();
+        curr->visiblePreqCount+=v.size();
     }
 }
 void focustree::addFocusExLine(const Focus &f){
@@ -141,14 +180,18 @@ void focustree::addFocusExLine(const Focus &f){
         if(!toItem(getProxy(str))->isVisible())continue;
 
         const Focus &t=focusModel->data(str);
+        FocusItem *curr=toItem(getProxy(f.id)),*excl=toItem(getProxy(str));
 
-        if(xQuery(displayPos[f.id].x(),displayPos[str].x(),displayPos[f.id].y(),[&](FocusItem *x){
+        curr->exclItems.push_back(excl);
+        excl->exclItems.push_back(curr);
+
+        if(xQuery(curr->displayPos.x(),excl->displayPos.x(),curr->displayPos.y(),[&](FocusItem *x){
             if(!x->isVisible())return false;
             return std::find(f.excl.begin(),f.excl.end(),x->focusid)!=f.excl.end()
                    &&std::find(t.excl.begin(),t.excl.end(),x->focusid)!=t.excl.end();
         }))continue;
 
-        if(getExclLine(toItem(getProxy(f.id)),toItem(getProxy(str))))continue;
+        if(getExclLine(curr,excl))continue;
 
         LineWidget *l = new ExclusiveLine();
         QPointF p1 = toCenter(getProxy(f.id)->pos());
@@ -156,24 +199,29 @@ void focustree::addFocusExLine(const Focus &f){
         if(p1.x()>p2.x())std::swap(p1,p2);
 
         l->setEnd(p2-p1);
-        connect(toItem(getProxy(f.id)),&FocusItem::hidden_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
-        connect(toItem(getProxy(str)),&FocusItem::hidden_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
-        connect(toItem(getProxy(f.id)),&FocusItem::shown_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
-        connect(toItem(getProxy(str)),&FocusItem::shown_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
+        connect(curr,&FocusItem::hidden_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
+        connect(excl,&FocusItem::hidden_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
+        connect(curr,&FocusItem::shown_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
+        connect(excl,&FocusItem::shown_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
 
         auto proxy=treeScene->addWidget(l);
+        l->proxy=proxy;
         if(p2.x()>=p1.x())
             proxy->setPos(QPointF(p1.x(),p1.y()-ExclusiveLine::h/2));
         else
             proxy->setPos(QPointF(p2.x(),p1.y()-ExclusiveLine::h/2));
         proxy->setZValue(-100);
-        exclLines.insert({toItem(getProxy(f.id)),toItem(getProxy(str))},proxy);
+        exclLines.insert({curr,excl},proxy);
         qDebug()<<"added excl line:"<<f.id<<str;
     }
 }
 
-const FocusModel &focustree::model(){
-    return *focusModel;
+FocusModel *focustree::model(){
+    return focusModel;
+}
+void focustree::handleSelection(FocusItem *item){
+    emit resetSelection();
+    setPreqFrames(item->focusid);
 }
 void focustree::setPreqFrames(const QString &str){
     const Focus &f=focusModel->data(str);
@@ -207,7 +255,6 @@ void focustree::on_actionopen_triggered()
     this->proxies.clear();
     this->focusGrid.clear();
     this->exclLines.clear();
-    this->displayPos.clear();
 
     foreach(const Focus& f,this->focusModel->allData()){
         this->addFocusItem(f);
@@ -239,13 +286,15 @@ FocusTreeView::FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *pa
     menu=new QMenu(this);
     QAction *act=new QAction("hide",this);
     menu->addAction(act);
+    moveTargetItem = nullptr;
+    menuTargetItem = nullptr;
     connect(act,&QAction::triggered,this,&FocusTreeView::hideFocus);
 }
 
 void FocusTreeView::hideFocus(){
-    if(selectedItem){
-        selectedItem->hide();
-        tree->uManager->addAction(newAction<HideFocusAction>(selectedItem));
+    if(menuTargetItem){
+        menuTargetItem->hide();
+        tree->uManager->addAction(newAction<HideFocusAction>(menuTargetItem));
     }
 }
 
@@ -337,3 +386,36 @@ void focustree::on_action_undo_triggered()
     uManager->undo();
 }
 
+void focustree::handleFocusMove(const QString &id,int dx,int dy,bool isManual){
+    auto *proxy=getProxy(id);
+    FocusItem *item=toItem(proxy);
+    QPointF npos=proxy->pos()+QPointF(dx*wgap,dy*hgap);
+
+    proxy->setPos(npos);
+
+    QVector<FocusItem*> &v=focusGrid[{item->displayPos.x(),item->displayPos.y()}];
+    v.erase(std::find(v.cbegin(),v.cend(),item));
+    focusGrid[{item->displayPos.x()+dx,item->displayPos.y()+dy}].push_back(item);
+    item->displayPos+=QPoint(dx,dy);
+    emit item->moved(dx*wgap,dy*hgap);
+
+    if(isManual)
+        uManager->addAction(newAction<MoveFocusAction>(item,dx,dy));
+    this->updateExclusiveFocus(id);
+    //qDebug()<<toItem(proxy)->displayPos<<" "<<dx<<dy;
+}
+
+int focustree::limitY(FocusItem *item,int targetY){
+    if(item->exclItems.size())
+        return item->exclItems[0]->displayPos.y();
+    else{
+        int miny=1e9,maxy=-1e9;
+        foreach(FocusItem *p,item->preqItems)
+            maxy=std::max(maxy,p->displayPos.y()+1);
+        foreach(FocusItem *p,item->postItems)
+            miny=std::min(miny,p->displayPos.y()-1);
+        targetY=std::max(maxy,targetY);
+        targetY=std::min(miny,targetY);
+        return targetY;
+    }
+}

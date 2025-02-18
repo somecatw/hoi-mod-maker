@@ -24,10 +24,13 @@ public:
     void setup(const QString &id,focustree *tr);
     void setFrame(const QColor &color);
     void hide();
+    void moveTo(int x,int y,bool isManual=true);
     // 用来在右侧悬停时暂时显示国策
     void reveal();
     void unreveal();
     int visiblePreqCount;
+    QPoint displayPos;
+    QVector<FocusItem*> exclItems,preqItems,postItems;
     // 对应国策的 id
     QString focusid;
 public slots:
@@ -41,6 +44,7 @@ signals:
     void hidden_with_id(const QString &id);
     void shown();
     void shown_with_id(const QString &id);
+    void moved(int dx,int dy);
 protected:
     void enterEvent(QEnterEvent *evt) override;
     void leaveEvent(QEvent *evt) override;

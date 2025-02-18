@@ -38,6 +38,16 @@ private:
     FocusItem *item;
 };
 
+class MoveFocusAction : public BaseAction{
+public:
+    void execute() override;
+    ActionPtr getReversedAction()const override;
+    QString name() const override;
+    MoveFocusAction(FocusItem *_item,int dx,int dy);
+    int dx,dy;
+    FocusItem *item;
+private:
+};
 class UndoManager : public QObject
 {
     Q_OBJECT
@@ -45,7 +55,7 @@ public:
     explicit UndoManager(QObject *parent = nullptr);
 
 signals:
-    \
+
 public slots:
     void undo();
     void redo();

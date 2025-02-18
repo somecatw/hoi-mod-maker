@@ -14,9 +14,11 @@ public:
     int beginX();
     int endX();
     QSize sizeHint()const override;
+    QGraphicsProxyWidget *proxy;
 
 protected:
     QPointF end;
+    void updateSize();
 };
 
 class BrokenLine : public LineWidget{
@@ -34,6 +36,8 @@ protected:
 public slots:
     void hide();
     void show();
+    void moveStart(int dx,int dy);
+    void moveEnd(int dx,int dy);
 };
 
 class SolidLine : public BrokenLine{

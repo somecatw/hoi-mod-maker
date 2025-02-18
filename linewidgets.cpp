@@ -14,7 +14,11 @@ void LineWidget::setEnd(const QPointF& _end){
     end=_end;
     this->setMinimumWidth(abs(end.x()));
 }
-
+void LineWidget::updateSize(){
+    this->setMinimumSize(abs(end.x())+2,abs(end.y())+2);
+    this->updateGeometry();
+    this->update();
+}
 int LineWidget::beginX(){
     if(end.x()>=0)return 1;
     else return -end.x()+1;
@@ -102,6 +106,8 @@ void BrokenLine::paintEvent(QPaintEvent *evt){
     painter.setPen(pen);
     painter.setBrush(Qt::NoBrush);
 
+    // painter.drawRect(this->rect());
+
     double midy=(type?end.y()-focustree::itemH/2:focustree::itemH/2);
     painter.drawLine(beginX(),0,beginX(),midy);
     painter.drawLine(beginX(),midy,endX(),midy);
@@ -109,4 +115,23 @@ void BrokenLine::paintEvent(QPaintEvent *evt){
 }
 void BrokenLine::setType(bool _type){
     type=_type;
+}
+
+void BrokenLine::moveStart(int dx,int dy){
+    assert(proxy!=nullptr);
+    proxy->moveBy(dx,dy);
+    moveEnd(-dx,-dy);
+}
+
+void BrokenLine::moveEnd(int dx,int dy){
+    assert(proxy!=nullptr);
+    if(end.x()<0&&end.x()+dx<0){
+        proxy->moveBy(dx,0);
+    }else if(end.x()<0){
+        proxy->moveBy(-end.x(),0);
+    }else if(end.x()>=0&&end.x()+dx<0){
+        proxy->moveBy((end.x()+dx),0);
+    }
+    end+=QPoint(dx,dy);
+    updateSize();
 }

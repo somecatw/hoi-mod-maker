@@ -79,8 +79,7 @@ void FocusItem::mousePressEvent(QMouseEvent *evt){
     if(evt->button()==Qt::LeftButton){
         selected=true;
         disconnect(tree,&focustree::resetSelection,this,&FocusItem::deSelect);
-        emit tree->resetSelection();
-        tree->setPreqFrames(this->focusid);
+        tree->handleSelection(this);
         connect(tree,&focustree::resetSelection,this,&FocusItem::deSelect);
         update();
     }else if(evt->button()==Qt::RightButton){
@@ -140,4 +139,8 @@ void FocusItem::reveal(){
 void FocusItem::unreveal(){
     setVisible(false);
     update();
+}
+
+void FocusItem::moveTo(int x,int y,bool isManual){
+    tree->model()->moveFocus(focusid,x-this->displayPos.x(),y-this->displayPos.y(),isManual);
 }

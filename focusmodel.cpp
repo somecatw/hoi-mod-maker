@@ -13,6 +13,13 @@ FocusModel::FocusModel(QObject *parent)
     : QObject{parent}
 {}
 
+void FocusModel::moveFocus(const QString &index,int dx,int dy,bool isManual){
+    size_t id=focusIndex.value(index);
+    focuses[id].x+=dx;
+    focuses[id].y+=dy;
+    emit focusMoved(index,dx,dy,isManual);
+}
+
 bool FocusModel::init(const AstNode& node){
     const AstNode &tree = request(node,"focus_tree");
 
@@ -30,8 +37,11 @@ bool FocusModel::init(const AstNode& node){
     qDebug()<<tree.children.size()<<" "<<v1.size()<<" "<<v2.size();
 
     focuses.clear();
-    foreach(const AstNode& node,v1)
-        focuses.emplace_back(node);
+    foreach(const AstNode& node,v1){
+        Focus f=Focus(node);
+        focusIndex.insert(f.id,focuses.size());
+        focuses.push_back(f);
+    }
 
     foreach(const Focus& f,focuses)
         if(!f.id.size())return false;
@@ -39,15 +49,14 @@ bool FocusModel::init(const AstNode& node){
 }
 
 Focus FocusModel::data(const QString& index) const {
-    foreach(const Focus& f,this->focuses)
-        if(f.id==index)return f;
+    if(focusIndex.contains(index))
+        return focuses[focusIndex.value(index)];
     return Focus();
 }
 
 const QVector<Focus>& FocusModel::allData() const{
     return focuses;
 }
-
 QVector<QString> getFocusPreqs(const AstNode &term){
     QVector<QString> ret;
 
@@ -108,3 +117,4 @@ Focus::Focus(const AstNode& node){
     foreach(const QString &str,this->excl)
         dbg<<str;
 }
+

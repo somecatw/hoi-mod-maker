@@ -26,10 +26,15 @@ public:
 protected:
     void wheelEvent(QWheelEvent *evt) override;
     void contextMenuEvent(QContextMenuEvent *evt) override;
+    void mousePressEvent(QMouseEvent *evt) override;
+    void mouseMoveEvent(QMouseEvent *evt) override;
+    void mouseReleaseEvent(QMouseEvent *evt) override;
 private:
     QMenu *menu;
-    FocusItem *selectedItem;
+    FocusItem *moveTargetItem;
+    FocusItem *menuTargetItem;
     focustree *tree;
+    FocusItem *getFocusAtGlobalPos(const QPoint &p)const;
 public slots:
     void hideFocus();
 };
@@ -53,9 +58,12 @@ public:
     static inline QColor colorList[10]={0xFF9900,0xFFFF00};
     UndoManager *uManager;
 
-    const FocusModel &model();
+    FocusModel *model();
+    void handleSelection(FocusItem *item);
     void setPreqFrames(const QString& str);
     bool noPreqHidden(const QString &str);
+
+    int limitY(FocusItem *item,int targetY);
 
 protected:
     void resizeEvent(QResizeEvent *evt) override;
@@ -67,6 +75,7 @@ signals:
 
 public slots:
     void showFocus(const QString &id);
+    void handleFocusMove(const QString &id,int dx,int dy,bool isManual);
 
 private slots:
     void on_focusa_clicked();
@@ -85,7 +94,6 @@ private:
     FocusTreeView *treeView;
     FocusModel *focusModel;
     QMap<QString,QGraphicsProxyWidget*> proxies;
-    QMap<QString,QPoint> displayPos;
     QMap<std::pair<int,int>,QVector<FocusItem*>> focusGrid;
     QMap<QPair<FocusItem*,FocusItem*>,QGraphicsProxyWidget*> exclLines;
 

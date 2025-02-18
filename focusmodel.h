@@ -35,10 +35,12 @@ public:
     bool init(const AstNode& node);
     Focus data(const QString& index) const;
     const QVector<Focus>& allData() const;
+    void moveFocus(const QString &id,int dx,int dy,bool isManual);
 private:
+    QMap<QString,size_t> focusIndex;
     QVector<Focus> focuses;
 signals:
-    void dataChanged();
+    void focusMoved(const QString &id,int dx,int dy,bool isManual);
 };
 
 #endif // FOCUSMODEL_H
