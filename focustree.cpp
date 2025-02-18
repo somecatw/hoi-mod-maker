@@ -10,7 +10,7 @@ focustree::focustree(QWidget *parent)
 {
     focustreeui->setupUi(this);
     treeScene = new QGraphicsScene(this);
-    treeView = new FocusTreeView(treeScene);
+    treeView = new FocusTreeView(this,treeScene);
     this->setCentralWidget(treeView);
     this->focusModel = new FocusModel(this);
     this->splitter = new QSplitter(this);
@@ -26,6 +26,8 @@ focustree::focustree(QWidget *parent)
     splitter->setCollapsible(0,false);
     splitter->setCollapsible(1,false);
     splitter->setMinimumSize({800,600});
+
+    uManager = new UndoManager(this);
 
     this->setCentralWidget(splitter);
     this->treeView->resize(int(size().width()*0.75),size().height());
@@ -65,6 +67,7 @@ QGraphicsProxyWidget* focustree::getProxy(const QString& id) const{
 
 void focustree::showFocus(const QString &id){
     toItem(getProxy(id))->show();
+    uManager->addAction(newAction<ShowFocusAction>(toItem(getProxy(id))));
 }
 
 void focustree::addFocusItem(const Focus& f){
@@ -227,9 +230,10 @@ void FocusTreeView::wheelEvent(QWheelEvent *evt){
     }else scale(1.0/fac,1.0/fac);
 }
 
-FocusTreeView::FocusTreeView(QGraphicsScene *scene, QWidget *parent)
+FocusTreeView::FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *parent)
     :QGraphicsView(scene,parent)
 {
+    tree=_tree;
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     setDragMode(QGraphicsView::ScrollHandDrag);
     menu=new QMenu(this);
@@ -241,6 +245,7 @@ FocusTreeView::FocusTreeView(QGraphicsScene *scene, QWidget *parent)
 void FocusTreeView::hideFocus(){
     if(selectedItem){
         selectedItem->hide();
+        tree->uManager->addAction(newAction<HideFocusAction>(selectedItem));
     }
 }
 
@@ -320,3 +325,15 @@ bool focustree::noPreqHidden(const QString &id){
     }
     return true;
 }
+
+void focustree::on_action_redo_triggered()
+{
+    uManager->redo();
+}
+
+
+void focustree::on_action_undo_triggered()
+{
+    uManager->undo();
+}
+

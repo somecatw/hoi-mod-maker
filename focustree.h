@@ -10,6 +10,7 @@
 #include "focusmodel.h"
 #include "focusitem.h"
 #include "focuslistview.h"
+#include "undomanager.h"
 
 namespace Ui {
 class focustree;
@@ -20,7 +21,7 @@ class FocusTreeView : public QGraphicsView
 {
     Q_OBJECT
 public:
-    FocusTreeView(QGraphicsScene *scene, QWidget *parent=nullptr);
+    FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *parent=nullptr);
 
 protected:
     void wheelEvent(QWheelEvent *evt) override;
@@ -28,6 +29,7 @@ protected:
 private:
     QMenu *menu;
     FocusItem *selectedItem;
+    focustree *tree;
 public slots:
     void hideFocus();
 };
@@ -49,6 +51,7 @@ public:
      * 不过好像换个跟红色（互斥国策）差别大一点的颜色比较好？有没有色彩老师指导一下
      */
     static inline QColor colorList[10]={0xFF9900,0xFFFF00};
+    UndoManager *uManager;
 
     const FocusModel &model();
     void setPreqFrames(const QString& str);
@@ -70,6 +73,9 @@ private slots:
     void updateExclusiveFocus(const QString &name);
     void on_actionopen_triggered();
     void revealFocus(const QString &id);
+
+    void on_action_redo_triggered();
+    void on_action_undo_triggered();
 
 private:
     Ui::focustree *focustreeui;

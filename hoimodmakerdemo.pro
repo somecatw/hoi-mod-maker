@@ -20,7 +20,8 @@ SOURCES += \
     mainwindow.cpp \
     parser.cpp \
     preset_ideas.cpp \
-    preset_parser.cpp
+    preset_parser.cpp \
+    undomanager.cpp
 
 HEADERS += \
     focuseditor.h \
@@ -33,7 +34,8 @@ HEADERS += \
     mainwindow.h \
     parser.h \
     preset_ideas.h \
-    preset_parser.h
+    preset_parser.h \
+    undomanager.h
 
 FORMS += \
     focuseditor.ui \
