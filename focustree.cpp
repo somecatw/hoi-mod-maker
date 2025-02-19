@@ -51,45 +51,6 @@ void focustree::on_focusa_clicked()
     a->show();
 }
 
-void FocusTreeView::contextMenuEvent(QContextMenuEvent *evt){
-    FocusItem *t=getFocusAtGlobalPos(evt->globalPos());
-    if(t)menuTargetItem=t;
-    menu->exec(evt->globalPos());
-}
-
-void FocusTreeView::mousePressEvent(QMouseEvent *evt){
-    FocusItem *t=getFocusAtGlobalPos(evt->globalPosition().toPoint());
-    if(t) moveTargetItem=t;
-    QGraphicsView::mousePressEvent(evt);
-}
-
-void FocusTreeView::mouseMoveEvent(QMouseEvent *evt){
-    if(moveTargetItem){
-        QPointF localpos=mapToScene(mapFromGlobal(evt->globalPosition()).toPoint());
-        int nx=localpos.x()/focustree::wgap;
-        int ny=localpos.y()/focustree::hgap;
-        ny=tree->limitY(moveTargetItem,ny);
-        if(QPoint(nx,ny)!=moveTargetItem->displayPos)
-            moveTargetItem->moveTo(nx,ny);
-    }
-    QGraphicsView::mouseMoveEvent(evt);
-}
-
-void FocusTreeView::mouseReleaseEvent(QMouseEvent *evt){
-    // FocusItem *t=getFocusAtGlobalPos(evt->globalPosition().toPoint());
-    if(moveTargetItem) moveTargetItem=nullptr;
-    QGraphicsView::mouseReleaseEvent(evt);
-}
-FocusItem *FocusTreeView::getFocusAtGlobalPos(const QPoint &p)const{
-    QGraphicsItem *item=this->itemAt(mapFromGlobal(p));
-    if(!item)return nullptr;
-    QGraphicsProxyWidget *w=dynamic_cast<QGraphicsProxyWidget*>(item);
-    if(!w)return nullptr;
-    FocusItem *t=dynamic_cast<FocusItem*>(w->widget());
-    if(!t)return nullptr;
-    return t;
-}
-
 QGraphicsProxyWidget* focustree::getProxy(const QString& id) const{
     if(!proxies.count(id))return nullptr;
     return proxies.value(id);
@@ -107,9 +68,10 @@ void focustree::addFocusItem(const Focus& f){
     item->setup(f.id,this);
     int rx=f.x,ry=f.y;
 
-    connect(this,&focustree::resetSelection,item,&FocusItem::deSelect);
+    connect(this->treeView,&FocusTreeView::cleared,item,&FocusItem::deSelect);
     connect(item,&FocusItem::hidden_with_id,this,&focustree::focusHidden);
     connect(item,&FocusItem::shown_with_id,this,&focustree::focusShown);
+    connect(this->treeView,&FocusTreeView::frameResetNeeded,item,&FocusItem::hideFrame);
 
     QGraphicsProxyWidget *proxy = this->treeScene->addWidget(item);
     proxy->setPos({wgap*f.x, hgap*f.y});
@@ -219,10 +181,13 @@ void focustree::addFocusExLine(const Focus &f){
 FocusModel *focustree::model(){
     return focusModel;
 }
-void focustree::handleSelection(FocusItem *item){
-    emit resetSelection();
+/*
+void focustree::handleSelection(FocusItem *item,bool shiftPressed){
+    if(!shiftPressed)emit resetSelection();
     setPreqFrames(item->focusid);
+    treeView->handleSelection(item,shiftPressed);
 }
+*/
 void focustree::setPreqFrames(const QString &str){
     const Focus &f=focusModel->data(str);
     const QVector<QVector<QString>> &v=f.preReq;
@@ -267,34 +232,6 @@ void focustree::on_actionopen_triggered()
     foreach(const Focus &f,this->focusModel->allData()){
         if(f.excl.size())
             this->addFocusExLine(f);
-    }
-}
-
-void FocusTreeView::wheelEvent(QWheelEvent *evt){
-    const double fac = 1.1;
-    if(evt->angleDelta().y()>0){
-        scale(fac,fac);
-    }else scale(1.0/fac,1.0/fac);
-}
-
-FocusTreeView::FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *parent)
-    :QGraphicsView(scene,parent)
-{
-    tree=_tree;
-    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
-    setDragMode(QGraphicsView::ScrollHandDrag);
-    menu=new QMenu(this);
-    QAction *act=new QAction("hide",this);
-    menu->addAction(act);
-    moveTargetItem = nullptr;
-    menuTargetItem = nullptr;
-    connect(act,&QAction::triggered,this,&FocusTreeView::hideFocus);
-}
-
-void FocusTreeView::hideFocus(){
-    if(menuTargetItem){
-        menuTargetItem->hide();
-        tree->uManager->addAction(newAction<HideFocusAction>(menuTargetItem));
     }
 }
 
@@ -399,23 +336,6 @@ void focustree::handleFocusMove(const QString &id,int dx,int dy,bool isManual){
     item->displayPos+=QPoint(dx,dy);
     emit item->moved(dx*wgap,dy*hgap);
 
-    if(isManual)
-        uManager->addAction(newAction<MoveFocusAction>(item,dx,dy));
     this->updateExclusiveFocus(id);
     //qDebug()<<toItem(proxy)->displayPos<<" "<<dx<<dy;
-}
-
-int focustree::limitY(FocusItem *item,int targetY){
-    if(item->exclItems.size())
-        return item->exclItems[0]->displayPos.y();
-    else{
-        int miny=1e9,maxy=-1e9;
-        foreach(FocusItem *p,item->preqItems)
-            maxy=std::max(maxy,p->displayPos.y()+1);
-        foreach(FocusItem *p,item->postItems)
-            miny=std::min(miny,p->displayPos.y()-1);
-        targetY=std::max(maxy,targetY);
-        targetY=std::min(miny,targetY);
-        return targetY;
-    }
 }

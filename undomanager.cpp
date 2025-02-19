@@ -23,7 +23,7 @@ void UndoManager::addAction(ActionPtr act){
     if (!undoStack.empty() && act->name()=="MoveFocus" && undoStack.top()->name()=="MoveFocus") {
         auto lastMove = dynamic_cast<MoveFocusAction*>(undoStack.top().get());
         auto newMove = dynamic_cast<MoveFocusAction*>(act.get());
-        if (lastMove && newMove && lastMove->item == newMove->item) {
+        if (lastMove && newMove && lastMove->items == newMove->items) {
             lastMove->dx += newMove->dx;
             lastMove->dy += newMove->dy;
             return;
@@ -59,14 +59,14 @@ QString ShowFocusAction::name()const{
 }
 
 void MoveFocusAction::execute(){
-    QPoint pt=item->displayPos;
-    item->moveTo(pt.x()+dx,pt.y()+dy,false);
+    foreach(FocusItem *item,items)
+        item->move(dx,dy);
 }
 ActionPtr MoveFocusAction::getReversedAction()const{
-    return newAction<MoveFocusAction>(item,-dx,-dy);
+    return newAction<MoveFocusAction>(items,-dx,-dy);
 }
-MoveFocusAction::MoveFocusAction(FocusItem *_item,int _dx,int _dy){
-    item=_item;
+MoveFocusAction::MoveFocusAction(const QSet<FocusItem*> &_items,int _dx,int _dy){
+    items=_items;
     dx=_dx;
     dy=_dy;
 }

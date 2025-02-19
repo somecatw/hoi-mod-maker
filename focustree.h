@@ -11,33 +11,11 @@
 #include "focusitem.h"
 #include "focuslistview.h"
 #include "undomanager.h"
+#include "focustreeview.h"
 
 namespace Ui {
 class focustree;
 }
-
-// 造一个容器用来放 FocusItem, 方便实现拖动、缩放国策树
-class FocusTreeView : public QGraphicsView
-{
-    Q_OBJECT
-public:
-    FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *parent=nullptr);
-
-protected:
-    void wheelEvent(QWheelEvent *evt) override;
-    void contextMenuEvent(QContextMenuEvent *evt) override;
-    void mousePressEvent(QMouseEvent *evt) override;
-    void mouseMoveEvent(QMouseEvent *evt) override;
-    void mouseReleaseEvent(QMouseEvent *evt) override;
-private:
-    QMenu *menu;
-    FocusItem *moveTargetItem;
-    FocusItem *menuTargetItem;
-    focustree *tree;
-    FocusItem *getFocusAtGlobalPos(const QPoint &p)const;
-public slots:
-    void hideFocus();
-};
 
 class focustree : public QMainWindow
 {
@@ -59,17 +37,15 @@ public:
     UndoManager *uManager;
 
     FocusModel *model();
-    void handleSelection(FocusItem *item);
+    //void handleSelection(FocusItem *item,bool shiftPressed);
     void setPreqFrames(const QString& str);
     bool noPreqHidden(const QString &str);
-
-    int limitY(FocusItem *item,int targetY);
 
 protected:
     void resizeEvent(QResizeEvent *evt) override;
 
 signals:
-    void resetSelection();
+    //void resetSelection();
     void focusHidden(const QString &id);
     void focusShown(const QString &id);
 

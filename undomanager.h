@@ -43,9 +43,9 @@ public:
     void execute() override;
     ActionPtr getReversedAction()const override;
     QString name() const override;
-    MoveFocusAction(FocusItem *_item,int dx,int dy);
+    MoveFocusAction(const QSet<FocusItem*> &set,int dx,int dy);
     int dx,dy;
-    FocusItem *item;
+    QSet<FocusItem*> items;
 private:
 };
 class UndoManager : public QObject

@@ -75,18 +75,22 @@ void FocusItem::drawFrame(QPainter *painter,const QColor& color){
     painter->drawRect(siz-wid,siz-len,wid,len);
 }
 
+/*
 void FocusItem::mousePressEvent(QMouseEvent *evt){
     if(evt->button()==Qt::LeftButton){
         selected=true;
         disconnect(tree,&focustree::resetSelection,this,&FocusItem::deSelect);
-        tree->handleSelection(this);
+        tree->handleSelection(this, evt->modifiers()&Qt::ShiftModifier);
         connect(tree,&focustree::resetSelection,this,&FocusItem::deSelect);
         update();
     }else if(evt->button()==Qt::RightButton){
 
     }
 }
-
+*/
+void FocusItem::setSelected(){
+    selected=true;
+}
 void FocusItem::setup(const QString& id,focustree *tr){
     focusid=id;
     tree=tr;
@@ -102,7 +106,10 @@ void FocusItem::setFrame(const QColor &color){
     frameEnabled=true;
     frameColor=color;
 }
-
+void FocusItem::hideFrame(){
+    frameEnabled=false;
+    update();
+}
 void FocusItem::hide(){
     if(isHidden)return;
     isHidden=true;
@@ -141,6 +148,6 @@ void FocusItem::unreveal(){
     update();
 }
 
-void FocusItem::moveTo(int x,int y,bool isManual){
-    tree->model()->moveFocus(focusid,x-this->displayPos.x(),y-this->displayPos.y(),isManual);
+void FocusItem::move(int dx,int dy,bool isManual){
+    tree->model()->moveFocus(focusid,dx,dy,isManual);
 }
