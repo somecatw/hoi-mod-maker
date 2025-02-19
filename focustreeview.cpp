@@ -148,7 +148,7 @@ void MultipleFocusSelection::updateLimits(){
         foreach(FocusItem *item,items){
             foreach(FocusItem *preq,item->preqItems){
                 if(items.contains(preq))continue;
-                uLimit=std::max(uLimit,item->displayPos.y()-(preq->displayPos.y()+1));
+                uLimit=std::max(uLimit,(preq->displayPos.y()+1)-item->displayPos.y());
             }
             foreach(FocusItem *post,item->postItems){
                 if(items.contains(post))continue;
