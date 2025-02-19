@@ -21,7 +21,7 @@ public:
 private:
     QSet<FocusItem*> items;
     int uLimit,dLimit;
-    QSet<FocusItem*> exclItems,preqItems,postItems;
+    QSet<FocusItem*> exclItems;
     void updateLimits();
 };
 

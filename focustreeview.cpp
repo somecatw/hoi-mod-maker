@@ -116,27 +116,13 @@ MultipleFocusSelection::MultipleFocusSelection(QObject *parent):QObject(parent){
 
 void MultipleFocusSelection::addItem(FocusItem *item){
     items.insert(item);
-
     if(exclItems.contains(item))exclItems.remove(item);
-    if(preqItems.contains(item))preqItems.remove(item);
-    if(postItems.contains(item))postItems.remove(item);
-
-    foreach(FocusItem *preq,item->preqItems)
-        if(!items.contains(preq))preqItems.insert(preq);
-    foreach(FocusItem *post,item->postItems)
-        if(!items.contains(post))postItems.insert(post);
     foreach(FocusItem *excl,item->exclItems)
         if(!items.contains(excl))exclItems.insert(excl);
     updateLimits();
 }
 void MultipleFocusSelection::removeItem(FocusItem *item){
     items.remove(item);
-    foreach(FocusItem *preq,item->preqItems)
-        if(items.contains(preq)) postItems.insert(item);
-
-    foreach(FocusItem *post,item->postItems)
-        if(items.contains(post)) preqItems.insert(item);
-
     foreach(FocusItem *excl,item->exclItems)
         if(items.contains(excl)) exclItems.insert(item);
     updateLimits();
@@ -145,8 +131,6 @@ void MultipleFocusSelection::removeItem(FocusItem *item){
 void MultipleFocusSelection::clear(){
     items.clear();
     exclItems.clear();
-    preqItems.clear();
-    postItems.clear();
 }
 
 size_t MultipleFocusSelection::size() const{
@@ -161,18 +145,17 @@ void MultipleFocusSelection::updateLimits(){
     uLimit=-1e9;dLimit=1e9;
     if(exclItems.size())uLimit=dLimit=0;
     else{
-        int uBoundary=1e9,dBoundary=-1e9;
         foreach(FocusItem *item,items){
-            uBoundary=std::min(uBoundary,item->displayPos.y());
-            dBoundary=std::max(dBoundary,item->displayPos.y());
+            foreach(FocusItem *preq,item->preqItems){
+                if(items.contains(preq))continue;
+                uLimit=std::max(uLimit,item->displayPos.y()-(preq->displayPos.y()+1));
+            }
+            foreach(FocusItem *post,item->postItems){
+                if(items.contains(post))continue;
+                dLimit=std::min(dLimit,post->displayPos.y()-1-item->displayPos.y());
+            }
         }
-        foreach(FocusItem *preq,preqItems)
-            uLimit=std::max(uLimit,preq->displayPos.y()+1);
-        foreach(FocusItem *post,postItems)
-            dLimit=std::min(dLimit,post->displayPos.y()-1);
 
-        uLimit=uLimit-uBoundary;
-        dLimit=dLimit-dBoundary;
     }
 }
 
