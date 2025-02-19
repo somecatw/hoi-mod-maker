@@ -36,17 +36,19 @@ public:
     QString focusid;
 public slots:
     void hideFrame();
+    void selectSubtree();
     void deSelect();
     void preqHidden();
     void preqShown();
     void show();
 signals:
-    //void select();
+    void implicitlySelected(FocusItem *item);
     void hidden();
     void hidden_with_id(const QString &id);
     void shown();
     void shown_with_id(const QString &id);
     void moved(int dx,int dy);
+    void neededSelectSubtree();
 protected:
     void enterEvent(QEnterEvent *evt) override;
     void leaveEvent(QEvent *evt) override;

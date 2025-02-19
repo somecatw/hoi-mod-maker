@@ -36,7 +36,7 @@ void FocusTreeView::mouseMoveEvent(QMouseEvent *evt){
 
         ny=selection->limitY(ny);
 
-        if(QPoint(nx,ny)!=moveReferenceItem->displayPos){
+        if(nx||ny){
             selection->move(nx,ny);
             tree->uManager->addAction(newAction<MoveFocusAction>(selection->itemSet(),nx,ny));
         }
@@ -78,13 +78,16 @@ FocusTreeView::FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *pa
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     setDragMode(QGraphicsView::ScrollHandDrag);
     menu=new QMenu(this);
-    QAction *act=new QAction("hide",this);
+    QAction *act=new QAction("隐藏子树",this);
+    QAction *act2=new QAction("选中子树",this);
     menu->addAction(act);
+    menu->addAction(act2);
     menuTargetItem = nullptr;
     moveReferenceItem = nullptr;
     dragging = false;
     this->selection=new MultipleFocusSelection(this);
     connect(act,&QAction::triggered,this,&FocusTreeView::hideFocus);
+    connect(act2,&QAction::triggered,this,&FocusTreeView::selectSubtree);
 }
 
 void FocusTreeView::hideFocus(){
@@ -110,6 +113,11 @@ void FocusTreeView::deSelect(FocusItem *item){
     emit frameResetNeeded();
     selection->removeItem(item);
     item->deSelect();
+}
+void FocusTreeView::selectSubtree(){
+    if(menuTargetItem){
+        menuTargetItem->selectSubtree();
+    }
 }
 
 MultipleFocusSelection::MultipleFocusSelection(QObject *parent):QObject(parent){}

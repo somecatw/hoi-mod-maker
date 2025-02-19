@@ -32,6 +32,9 @@ class FocusTreeView : public QGraphicsView
 public:
     FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *parent=nullptr);
 
+public slots:
+    void select(FocusItem *item);
+    void deSelect(FocusItem *item);
 protected:
     void wheelEvent(QWheelEvent *evt) override;
     void contextMenuEvent(QContextMenuEvent *evt) override;
@@ -48,13 +51,13 @@ private:
 
     FocusItem *getFocusAtGlobalPos(const QPoint &p)const;
     void clearSelection();
-    void select(FocusItem *item);
-    void deSelect(FocusItem *item);
+
 signals:
     void cleared();
     void frameResetNeeded();
 public slots:
     void hideFocus();
+    void selectSubtree();
 };
 
 #endif // FOCUSTREEVIEW_H

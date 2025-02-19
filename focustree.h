@@ -17,6 +17,8 @@ namespace Ui {
 class focustree;
 }
 
+class LineItem;
+
 class focustree : public QMainWindow
 {
     Q_OBJECT
@@ -71,7 +73,7 @@ private:
     FocusModel *focusModel;
     QMap<QString,QGraphicsProxyWidget*> proxies;
     QMap<std::pair<int,int>,QVector<FocusItem*>> focusGrid;
-    QMap<QPair<FocusItem*,FocusItem*>,QGraphicsProxyWidget*> exclLines;
+    QMap<QPair<FocusItem*,FocusItem*>,LineItem*> exclLines;
 
     // 如果 id 已经存在，就直接 return
     void addFocusItem(const Focus& f);
@@ -83,7 +85,7 @@ private:
 
     bool xQuery(int x1,int x2,int y,std::function<bool(FocusItem*)> f)const;
     bool yQuery(int y1,int y2,int x,std::function<bool(FocusItem*)> f)const;
-    QGraphicsProxyWidget *getExclLine(FocusItem *a,FocusItem *b)const;
+    LineItem *getExclLine(FocusItem *a,FocusItem *b)const;
 };
 
 #endif // FOCUSTREE_H

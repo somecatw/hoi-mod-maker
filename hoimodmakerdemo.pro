@@ -16,7 +16,7 @@ SOURCES += \
     focustree.cpp \
     focustreeview.cpp \
     idea_editer.cpp \
-    linewidgets.cpp \
+    lineitems.cpp \
     main.cpp \
     mainwindow.cpp \
     parser.cpp \
@@ -32,7 +32,7 @@ HEADERS += \
     focustree.h \
     focustreeview.h \
     idea_editer.h \
-    linewidgets.h \
+    lineitems.h \
     mainwindow.h \
     parser.h \
     preset_ideas.h \

@@ -151,3 +151,8 @@ void FocusItem::unreveal(){
 void FocusItem::move(int dx,int dy,bool isManual){
     tree->model()->moveFocus(focusid,dx,dy,isManual);
 }
+
+void FocusItem::selectSubtree(){
+    emit implicitlySelected(this);
+    emit neededSelectSubtree();
+}

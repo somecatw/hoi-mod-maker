@@ -2,7 +2,7 @@
 #include "ui_focustree.h"
 #include "focuseditor.h"
 #include "parser.h"
-#include "linewidgets.h"
+#include "lineitems.h"
 
 focustree::focustree(QWidget *parent)
     : QMainWindow(parent)
@@ -72,6 +72,7 @@ void focustree::addFocusItem(const Focus& f){
     connect(item,&FocusItem::hidden_with_id,this,&focustree::focusHidden);
     connect(item,&FocusItem::shown_with_id,this,&focustree::focusShown);
     connect(this->treeView,&FocusTreeView::frameResetNeeded,item,&FocusItem::hideFrame);
+    connect(item,&FocusItem::implicitlySelected,this->treeView,&FocusTreeView::select);
 
     QGraphicsProxyWidget *proxy = this->treeScene->addWidget(item);
     proxy->setPos({wgap*f.x, hgap*f.y});
@@ -118,16 +119,17 @@ void focustree::addFocusPreqLine(const Focus &f){
             connect(preq,&FocusItem::shown,l,&BrokenLine::show);
             connect(curr,&FocusItem::moved,l,&BrokenLine::moveEnd);
             connect(preq,&FocusItem::moved,l,&BrokenLine::moveStart);
+            connect(preq,&FocusItem::neededSelectSubtree,curr,&FocusItem::selectSubtree);
 
-            auto proxy=treeScene->addWidget(l);
-            l->proxy=proxy;
+            treeScene->addItem(l);
+            // l->proxy=proxy;
 
             if(p2.x()>=p1.x())
-                proxy->setPos(QPointF(p1.x()-1,p1.y()));
+                l->setPos(QPointF(p1.x()-1,p1.y()));
             else
-                proxy->setPos(QPointF(p2.x()-1,p1.y()));
+                l->setPos(QPointF(p2.x()-1,p1.y()));
 
-            proxy->setZValue(-100);
+            l->setZValue(-100);
 
             connect(preq,&FocusItem::hidden,curr,&FocusItem::preqHidden);
             connect(preq,&FocusItem::shown,curr,&FocusItem::preqShown);
@@ -155,7 +157,7 @@ void focustree::addFocusExLine(const Focus &f){
 
         if(getExclLine(curr,excl))continue;
 
-        LineWidget *l = new ExclusiveLine();
+        LineItem *l = new ExclusiveLine();
         QPointF p1 = toCenter(getProxy(f.id)->pos());
         QPointF p2 = toCenter(getProxy(str)->pos());
         if(p1.x()>p2.x())std::swap(p1,p2);
@@ -166,14 +168,14 @@ void focustree::addFocusExLine(const Focus &f){
         connect(curr,&FocusItem::shown_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
         connect(excl,&FocusItem::shown_with_id,this,&focustree::updateExclusiveFocus,Qt::UniqueConnection);
 
-        auto proxy=treeScene->addWidget(l);
-        l->proxy=proxy;
+        treeScene->addItem(l);
+
         if(p2.x()>=p1.x())
-            proxy->setPos(QPointF(p1.x(),p1.y()-ExclusiveLine::h/2));
+            l->setPos(QPointF(p1.x(),p1.y()-ExclusiveLine::h/2));
         else
-            proxy->setPos(QPointF(p2.x(),p1.y()-ExclusiveLine::h/2));
-        proxy->setZValue(-100);
-        exclLines.insert({curr,excl},proxy);
+            l->setPos(QPointF(p2.x(),p1.y()-ExclusiveLine::h/2));
+        l->setZValue(-100);
+        exclLines.insert({curr,excl},l);
         qDebug()<<"added excl line:"<<f.id<<str;
     }
 }
@@ -237,7 +239,7 @@ void focustree::on_actionopen_triggered()
 
 void focustree::removeFocusExLine(const Focus &f){
     foreach(const QString &str,f.excl){
-        QGraphicsProxyWidget *w;
+        LineItem *w;
         FocusItem *a=toItem(getProxy(f.id)),
             *b=toItem(getProxy(str));
         if((w=getExclLine(a,b))){
@@ -279,7 +281,7 @@ bool focustree::yQuery(int y1,int y2,int x,std::function<bool(FocusItem*)> f)con
     return false;
 }
 
-QGraphicsProxyWidget* focustree::getExclLine(FocusItem *a,FocusItem *b)const{
+LineItem* focustree::getExclLine(FocusItem *a,FocusItem *b)const{
     if(exclLines.contains({a,b}))return exclLines.value({a,b});
     else return exclLines.value({b,a});
 }
