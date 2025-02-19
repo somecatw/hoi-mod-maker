@@ -106,15 +106,17 @@ Focus::Focus(const AstNode& node){
 
     foreach(const AstNode& node,preqNodes){
         preReq.push_back(getFocusPreqs(node));
-        qDebug()<<"preqs:";
+        /*qDebug()<<"preqs:";
         auto dbg=qDebug();
         foreach(const QString &str,preReq.back())
-            dbg<<str;
+            dbg<<str;*/
     }
 
-    auto dbg=qDebug();
+    /*auto dbg=qDebug();
     dbg<<"mutually exclusives:";
     foreach(const QString &str,this->excl)
         dbg<<str;
+    */
+    otherInfo=Parser::getAllExcept(lst,{"id","icon","x","y","relative_position_id","prerequisite","mutually_exclusive"});
 }
 

@@ -41,6 +41,7 @@ protected:
     void mousePressEvent(QMouseEvent *evt) override;
     void mouseMoveEvent(QMouseEvent *evt) override;
     void mouseReleaseEvent(QMouseEvent *evt) override;
+    void mouseDoubleClickEvent(QMouseEvent *evt) override;
 private:
     QMenu *menu;
     MultipleFocusSelection *selection;

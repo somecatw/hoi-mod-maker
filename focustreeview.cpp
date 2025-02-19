@@ -2,6 +2,7 @@
 #include "focustreeview.h"
 #include <QContextMenuEvent>
 #include "focustree.h"
+#include "focuseditor.h"
 
 void FocusTreeView::contextMenuEvent(QContextMenuEvent *evt){
     FocusItem *t=getFocusAtGlobalPos(evt->globalPos());
@@ -54,6 +55,15 @@ void FocusTreeView::mouseReleaseEvent(QMouseEvent *evt){
     if(dragging) dragging=false;
     QGraphicsView::mouseReleaseEvent(evt);
 }
+
+void FocusTreeView::mouseDoubleClickEvent(QMouseEvent *evt){
+    FocusItem *t=getFocusAtGlobalPos(evt->globalPosition().toPoint());
+    if(t){
+        FocusEditor *e=new FocusEditor(tree);
+        e->show();
+    }
+}
+
 FocusItem *FocusTreeView::getFocusAtGlobalPos(const QPoint &p)const{
     QGraphicsItem *item=this->itemAt(mapFromGlobal(p));
     if(!item)return nullptr;
