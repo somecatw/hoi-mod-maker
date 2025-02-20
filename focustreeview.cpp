@@ -3,12 +3,39 @@
 #include <QContextMenuEvent>
 #include "focustree.h"
 #include "focuseditor.h"
+#include "prereqgroupselector.h"
 
 void FocusTreeView::contextMenuEvent(QContextMenuEvent *evt){
     FocusItem *t=getFocusAtGlobalPos(evt->globalPos());
     if(t){
         menuTargetItem=t;
+        bool addPreqFlag=false,removePreqFlag=false;
+        if(selection->size()==1 && t->y()<(*selection->itemSet().begin())->y()){
+            FocusItem *base=(*selection->itemSet().begin());
+            if(!base->preqItems.contains(t))
+                addPreqFlag=true;
+            else removePreqFlag=true;
+        }
+        QAction *act1,*act2;
+        if(addPreqFlag){
+            act1=new QAction("设置为前置",this);
+            menu->addAction(act1);
+            connect(act1,&QAction::triggered,this,&FocusTreeView::setPrereq);
+        }
+        if(removePreqFlag){
+            act2=new QAction("取消前置",this);
+            menu->addAction(act2);
+            connect(act2,&QAction::triggered,this,&FocusTreeView::removePrereq);
+        }
         menu->exec(evt->globalPos());
+        if(addPreqFlag){
+            menu->removeAction(act1);
+            delete act1;
+        }
+        if(removePreqFlag){
+            menu->removeAction(act2);
+            delete act2;
+        }
     }
 }
 
@@ -47,8 +74,8 @@ void FocusTreeView::mouseMoveEvent(QMouseEvent *evt){
         ny=selection->limitY(ny);
 
         if(nx||ny){
-            selection->move(nx,ny);
-            tree->uManager->addAction(newAction<MoveFocusAction>(selection->itemSet(),nx,ny));
+            selection->move(tree,nx,ny);
+            tree->uManager->addAction(newAction<MoveFocusAction>(selection->itemSet(),tree,nx,ny));
         }
     }else QGraphicsView::mouseMoveEvent(evt);
 }
@@ -97,6 +124,20 @@ void FocusTreeView::wheelEvent(QWheelEvent *evt){
     }else scale(1.0/fac,1.0/fac);
 }
 
+void FocusTreeView::setPrereq(){
+    PrereqGroupSelector selector=PrereqGroupSelector(
+        tree->model()->data((*selection->itemSet().begin())->focusid),
+        tree->model()->data(menuTargetItem->focusid),
+        tree,this);
+    selector.exec();
+}
+
+void FocusTreeView::removePrereq(){
+    int group=tree->model()->getFocusPreqGroup((*selection->itemSet().begin())->focusid,menuTargetItem->focusid);
+    tree->removeFocusPrereq((*selection->itemSet().begin())->focusid,menuTargetItem->focusid);
+    tree->uManager->addAction(newAction<RemovePrereqAction>(tree,(*selection->itemSet().begin())->focusid,menuTargetItem->focusid,group));
+}
+
 FocusTreeView::FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *parent)
     :QGraphicsView(scene,parent)
 {
@@ -117,6 +158,7 @@ FocusTreeView::FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *pa
 
 void FocusTreeView::hideFocus(){
     if(menuTargetItem){
+        clearSelection();
         menuTargetItem->hide();
         tree->uManager->addAction(newAction<HideFocusAction>(menuTargetItem));
     }
@@ -197,9 +239,9 @@ int MultipleFocusSelection::limitY(int targetY){
     return std::min(std::max(targetY,uLimit),dLimit);
 }
 
-void MultipleFocusSelection::move(int dx,int dy){
+void MultipleFocusSelection::move(focustree *tree,int dx,int dy){
     foreach(FocusItem *item,items){
-        item->move(dx,dy);
+        tree->moveFocus(item,dx,dy);
     }
 }
 

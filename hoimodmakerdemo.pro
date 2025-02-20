@@ -20,6 +20,8 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     parser.cpp \
+    prereqgroupselector.cpp \
+    prereqgroupwidget.cpp \
     preset_ideas.cpp \
     preset_parser.cpp \
     undomanager.cpp
@@ -35,6 +37,8 @@ HEADERS += \
     lineitems.h \
     mainwindow.h \
     parser.h \
+    prereqgroupselector.h \
+    prereqgroupwidget.h \
     preset_ideas.h \
     preset_parser.h \
     undomanager.h
@@ -46,6 +50,8 @@ FORMS += \
     focustree.ui \
     idea_editer.ui \
     mainwindow.ui \
+    prereqgroupselector.ui \
+    prereqgroupwidget.ui \
     preset_ideas.ui
 
 # Default rules for deployment.

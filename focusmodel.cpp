@@ -20,6 +20,25 @@ void FocusModel::moveFocus(const QString &index,int dx,int dy,bool isManual){
     emit focusMoved(index,dx,dy,isManual);
 }
 
+void FocusModel::addFocusPreq(const QString &baseId,const QString &targetId,int group){
+    size_t bindex=focusIndex[baseId];
+    if((unsigned)group==focuses[bindex].preReq.size())
+        focuses[bindex].preReq.push_back({targetId});
+    else
+        focuses[bindex].preReq[group].push_back(targetId);
+    emit focusPreqChanged(baseId);
+}
+
+void FocusModel::removeFocusPreq(const QString &baseId,const QString &targetId){
+    size_t bindex=focusIndex[baseId];
+    for(QVector<QString> &v:focuses[bindex].preReq){
+        if(v.contains(targetId))
+            v.remove(v.indexOf(targetId));
+    }
+    focuses[bindex].preReq.removeAll({});
+    emit focusPreqChanged(baseId);
+}
+
 bool FocusModel::init(ObjPointer obj){
     AttrPointer tree = request(obj,"focus_tree");
 
@@ -45,7 +64,13 @@ bool FocusModel::init(ObjPointer obj){
         if(!f.id.size())return false;
     return true;
 }
-
+int FocusModel::getFocusPreqGroup(const QString &base, const QString &target) const{
+    const Focus &f=focuses[focusIndex[base]];
+    for(unsigned i=0;i<f.preReq.size();i++){
+        if(f.preReq[i].contains(target))return i;
+    }
+    return -1;
+}
 Focus FocusModel::data(const QString& index) const {
     if(focusIndex.contains(index))
         return focuses[focusIndex.value(index)];

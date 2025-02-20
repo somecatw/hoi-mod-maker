@@ -1,4 +1,5 @@
 #include "undomanager.h"
+#include "focustree.h"
 #include <QDateTime>
 UndoManager::UndoManager(QObject *parent)
     : QObject{parent}
@@ -66,15 +67,16 @@ QString ShowFocusAction::name()const{
 
 void MoveFocusAction::execute(){
     foreach(FocusItem *item,items)
-        item->move(dx,dy);
+        tree->moveFocus(item,dx,dy);
 }
 ActionPtr MoveFocusAction::getReversedAction()const{
-    return newAction<MoveFocusAction>(items,-dx,-dy);
+    return newAction<MoveFocusAction>(items,tree,-dx,-dy);
 }
-MoveFocusAction::MoveFocusAction(const QSet<FocusItem*> &_items,int _dx,int _dy){
+MoveFocusAction::MoveFocusAction(const QSet<FocusItem*> &_items,focustree *_tree,int _dx,int _dy){
     items=_items;
     dx=_dx;
     dy=_dy;
+    tree=_tree;
 }
 QString MoveFocusAction::name()const{
     return "MoveFocus";
@@ -90,4 +92,36 @@ void MoveFocusAction::mergeWith(ActionPtr act){
     MoveFocusAction *mfa=dynamic_cast<MoveFocusAction*>(act.data());
     dx+=mfa->dx;
     dy+=mfa->dy;
+}
+
+void AddPrereqAction::execute(){
+    tree->addFocusPrereq(itemId,prereqId,group);
+}
+ActionPtr AddPrereqAction::getReversedAction()const{
+    return newAction<RemovePrereqAction>(tree,itemId,prereqId,group);
+}
+AddPrereqAction::AddPrereqAction(focustree *_tree,QString _itemId,QString _prereqId,int _group){
+    tree=_tree;
+    itemId=_itemId;
+    prereqId=_prereqId;
+    group=_group;
+}
+QString AddPrereqAction::name()const{
+    return "AddPrerequisite";
+}
+
+void RemovePrereqAction::execute(){
+    tree->removeFocusPrereq(itemId,prereqId);
+}
+ActionPtr RemovePrereqAction::getReversedAction()const{
+    return newAction<AddPrereqAction>(tree,itemId,prereqId,group);
+}
+RemovePrereqAction::RemovePrereqAction(focustree *_tree,QString _itemId,QString _prereqId,int _group){
+    tree=_tree;
+    itemId=_itemId;
+    prereqId=_prereqId;
+    group=_group;
+}
+QString RemovePrereqAction::name()const{
+    return "RemovePrerequisite";
 }

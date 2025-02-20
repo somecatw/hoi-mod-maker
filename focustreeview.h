@@ -16,7 +16,7 @@ public:
     int limitY(int targety);
     size_t size() const;
     bool contains(FocusItem *item)const;
-    void move(int dx,int dy);
+    void move(focustree *tree,int dx,int dy);
     const QSet<FocusItem*> &itemSet()const;
 private:
     QSet<FocusItem*> items;
@@ -59,6 +59,8 @@ signals:
 public slots:
     void hideFocus();
     void selectSubtree();
+    void setPrereq();
+    void removePrereq();
 };
 
 #endif // FOCUSTREEVIEW_H

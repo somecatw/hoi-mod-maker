@@ -35,13 +35,16 @@ public:
     /* 同种颜色的前置国策，只需完成任意一个，详见 focusmodel.h
      * 不过好像换个跟红色（互斥国策）差别大一点的颜色比较好？有没有色彩老师指导一下
      */
-    static inline QColor colorList[10]={0xFF9900,0xFFFF00};
+    static inline QColor colorList[10]={0x4B0002,0xFF8C00,0x8B008B,0x001f3f};
     UndoManager *uManager;
 
     FocusModel *model();
     //void handleSelection(FocusItem *item,bool shiftPressed);
-    void setPreqFrames(const QString& str);
-    bool noPreqHidden(const QString &str);
+    void moveFocus(FocusItem *item,int dx,int dy,bool isManual=false);
+    void addFocusPrereq(const QString &baseId,const QString &targetId,int group);
+    void removeFocusPrereq(const QString &baseId,const QString &targetId);
+    void setPreqFrames(const QString &id);
+    bool noPreqHidden(const QString &id);
 
 protected:
     void resizeEvent(QResizeEvent *evt) override;
@@ -54,6 +57,7 @@ signals:
 public slots:
     void showFocus(const QString &id);
     void handleFocusMove(const QString &id,int dx,int dy,bool isManual);
+    void handleFocusPreqUpdated(const QString &id);
 
 private slots:
     void on_focusa_clicked();
@@ -63,6 +67,8 @@ private slots:
 
     void on_action_redo_triggered();
     void on_action_undo_triggered();
+
+    void on_actiondaochu_triggered();
 
 private:
     Ui::focustree *focustreeui;
@@ -81,6 +87,7 @@ private:
     void addFocusPreqLine(const Focus& f);
     void addFocusExLine(const Focus& f);
     void removeFocusExLine(const Focus &f);
+    void removeFocusPreqLine(FocusItem *item);
     QGraphicsProxyWidget* getProxy(const QString& id) const;
 
     bool xQuery(int x1,int x2,int y,std::function<bool(FocusItem*)> f)const;

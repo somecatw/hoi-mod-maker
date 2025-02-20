@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QPainter>
+#include "lineitems.h"
 
 namespace Ui {
 class FocusItem;
@@ -24,14 +25,15 @@ public:
     void setup(const QString &id,focustree *tr);
     void setFrame(const QColor &color);
     void hide();
-    void move(int x,int y,bool isManual=true);
     void setSelected();
     // 用来在右侧悬停时暂时显示国策
     void reveal();
     void unreveal();
+
     int visiblePreqCount;
     QPoint displayPos;
     QVector<FocusItem*> exclItems,preqItems,postItems;
+    QVector<BrokenLine*> preqLines;
     // 对应国策的 id
     QString focusid;
 public slots:

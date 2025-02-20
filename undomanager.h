@@ -50,14 +50,41 @@ public:
     void execute() override;
     ActionPtr getReversedAction()const override;
     QString name() const override;
-    MoveFocusAction(const QSet<FocusItem*> &set,int dx,int dy);
+    MoveFocusAction(const QSet<FocusItem*> &set,focustree *tree,int dx,int dy);
     bool canMergeWith(ActionPtr act) const override;
     void mergeWith(ActionPtr act) override;
     int dx,dy;
     QSet<FocusItem*> items;
+    focustree *tree;
 private:
     static constexpr int mergeTimeThresholdMS=1000;
 };
+
+class AddPrereqAction : public BaseAction{
+public:
+    void execute() override;
+    ActionPtr getReversedAction()const override;
+    QString name() const override;
+    AddPrereqAction(focustree *tree,QString itemId,QString prereqId,int group);
+private:
+    focustree *tree;
+    QString itemId,prereqId;
+    int group;
+};
+
+class RemovePrereqAction : public BaseAction{
+public:
+    void execute() override;
+    ActionPtr getReversedAction()const override;
+    QString name() const override;
+    RemovePrereqAction(focustree *tree,QString itemId,QString prereqId,int group);
+private:
+    focustree *tree;
+    QString itemId,prereqId;
+    int group;
+};
+
+
 class UndoManager : public QObject
 {
     Q_OBJECT

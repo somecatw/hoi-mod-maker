@@ -3,6 +3,7 @@
 #include "focuseditor.h"
 #include "parser.h"
 #include "lineitems.h"
+#include "prereqgroupselector.h"
 
 focustree::focustree(QWidget *parent)
     : QMainWindow(parent)
@@ -10,6 +11,10 @@ focustree::focustree(QWidget *parent)
 {
     focustreeui->setupUi(this);
     treeScene = new QGraphicsScene(this);
+
+    // 不加这个的话删东西的时候会 crash，不知道对性能有多少影响
+    treeScene->setItemIndexMethod(QGraphicsScene::NoIndex);
+
     treeView = new FocusTreeView(this,treeScene);
     this->setCentralWidget(treeView);
     this->focusModel = new FocusModel(this);
@@ -22,6 +27,7 @@ focustree::focustree(QWidget *parent)
     connect(this->listView,&FocusListView::focusShownOnHover,this,&focustree::revealFocus);
 
     connect(this->focusModel,&FocusModel::focusMoved,this,&focustree::handleFocusMove);
+    connect(this->focusModel,&FocusModel::focusPreqChanged,this,&focustree::handleFocusPreqUpdated);
 
     splitter->addWidget(treeView);
     splitter->addWidget(listView);
@@ -100,6 +106,8 @@ void focustree::addFocusPreqLine(const Focus &f){
             if(v.size()==1)
                 l = new SolidLine();
             else l = new DotLine();
+
+            curr->preqLines.push_back(l);
 
             FocusItem *preq=toItem(getProxy(str));
             preq->postItems.push_back(curr);
@@ -183,13 +191,7 @@ void focustree::addFocusExLine(const Focus &f){
 FocusModel *focustree::model(){
     return focusModel;
 }
-/*
-void focustree::handleSelection(FocusItem *item,bool shiftPressed){
-    if(!shiftPressed)emit resetSelection();
-    setPreqFrames(item->focusid);
-    treeView->handleSelection(item,shiftPressed);
-}
-*/
+
 void focustree::setPreqFrames(const QString &str){
     const Focus &f=focusModel->data(str);
     const QVector<QVector<QString>> &v=f.preReq;
@@ -340,4 +342,42 @@ void focustree::handleFocusMove(const QString &id,int dx,int dy,bool isManual){
 
     this->updateExclusiveFocus(id);
     //qDebug()<<toItem(proxy)->displayPos<<" "<<dx<<dy;
+}
+
+void focustree::on_actiondaochu_triggered()
+{
+
+}
+
+void focustree::moveFocus(FocusItem *item,int dx,int dy,bool isManual){
+    focusModel->moveFocus(item->focusid,dx,dy,isManual);
+}
+
+void focustree::addFocusPrereq(const QString &baseId,const QString &targetId,int group){
+    focusModel->addFocusPreq(baseId,targetId,group);
+}
+void focustree::removeFocusPrereq(const QString &baseId,const QString &targetId){
+    focusModel->removeFocusPreq(baseId,targetId);
+}
+
+void focustree::removeFocusPreqLine(FocusItem *item){
+    foreach(BrokenLine *l,item->preqLines){
+        treeScene->removeItem(l);
+        l->deleteLater();
+    }
+    foreach(FocusItem *preq,item->preqItems){
+        disconnect(preq,&FocusItem::neededSelectSubtree,item,&FocusItem::selectSubtree);
+        disconnect(preq,&FocusItem::hidden,item,&FocusItem::preqHidden);
+        disconnect(preq,&FocusItem::shown,item,&FocusItem::preqShown);
+        preq->postItems.remove(preq->postItems.indexOf(item));
+    }
+    item->preqItems.clear();
+    item->preqLines.clear();
+}
+
+void focustree::handleFocusPreqUpdated(const QString &id){
+    emit treeView->frameResetNeeded();
+    removeFocusPreqLine(toItem(getProxy(id)));
+    addFocusPreqLine(focusModel->data(id));
+    setPreqFrames(id);
 }

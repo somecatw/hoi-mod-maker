@@ -36,11 +36,15 @@ public:
     Focus data(const QString& index) const;
     const QVector<Focus>& allData() const;
     void moveFocus(const QString &id,int dx,int dy,bool isManual);
+    void addFocusPreq(const QString &baseId,const QString &targetId,int group);
+    void removeFocusPreq(const QString &baseId,const QString &targetId);
+    int getFocusPreqGroup(const QString &baseId,const QString &targetId) const;
 private:
     QMap<QString,size_t> focusIndex;
     QVector<Focus> focuses;
 signals:
     void focusMoved(const QString &id,int dx,int dy,bool isManual);
+    void focusPreqChanged(const QString &id);
 };
 
 #endif // FOCUSMODEL_H
