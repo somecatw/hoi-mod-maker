@@ -1,5 +1,5 @@
 #include "undomanager.h"
-
+#include <QDateTime>
 UndoManager::UndoManager(QObject *parent)
     : QObject{parent}
 {}
@@ -20,16 +20,22 @@ void UndoManager::redo(){
 
 void UndoManager::addAction(ActionPtr act){
     redoStack.clear();
-    if (!undoStack.empty() && act->name()=="MoveFocus" && undoStack.top()->name()=="MoveFocus") {
-        auto lastMove = dynamic_cast<MoveFocusAction*>(undoStack.top().get());
-        auto newMove = dynamic_cast<MoveFocusAction*>(act.get());
-        if (lastMove && newMove && lastMove->items == newMove->items) {
-            lastMove->dx += newMove->dx;
-            lastMove->dy += newMove->dy;
+    if(undoStack.size()){
+        if(undoStack.top()->canMergeWith(act)){
+            undoStack.top()->mergeWith(act);
             return;
         }
     }
     undoStack.push(act);
+}
+BaseAction::BaseAction(){
+    timeStamp=QDateTime::currentMSecsSinceEpoch();
+}
+bool BaseAction::canMergeWith(ActionPtr act) const{
+    return false;
+}
+void BaseAction::mergeWith(ActionPtr act){
+
 }
 
 void HideFocusAction::execute(){
@@ -72,4 +78,16 @@ MoveFocusAction::MoveFocusAction(const QSet<FocusItem*> &_items,int _dx,int _dy)
 }
 QString MoveFocusAction::name()const{
     return "MoveFocus";
+}
+bool MoveFocusAction::canMergeWith(ActionPtr act) const{
+    MoveFocusAction *mfa=dynamic_cast<MoveFocusAction*>(act.data());
+    if(!mfa)return false;
+    if(items!=mfa->items)return false;
+    if(mfa->timeStamp-timeStamp>MoveFocusAction::mergeTimeThresholdMS)return false;
+    return true;
+}
+void MoveFocusAction::mergeWith(ActionPtr act){
+    MoveFocusAction *mfa=dynamic_cast<MoveFocusAction*>(act.data());
+    dx+=mfa->dx;
+    dy+=mfa->dy;
 }

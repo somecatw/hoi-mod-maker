@@ -1,4 +1,11 @@
 #include "parser.h"
+#include <list>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+
 using namespace std;
 
 struct AstNode{

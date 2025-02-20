@@ -2,20 +2,27 @@
 #define UNDOMANAGER_H
 
 #include <QObject>
-#include <memory>
 #include <QStack>
 #include "focusitem.h"
 
 class BaseAction;
-using ActionPtr = std::shared_ptr<BaseAction>;
+using ActionPtr = QSharedPointer<BaseAction>;
 
-#define newAction std::make_shared
+template<typename Tp,typename Arg,typename ...Args>
+ActionPtr newAction(Arg && x, Args && ...xs){
+    return QSharedPointer<Tp>::create(std::forward<Arg>(x),std::forward<Args>(xs)...);
+}
 
 class BaseAction{
 public:
+    BaseAction();
     virtual void execute() = 0;
     virtual ActionPtr getReversedAction()const = 0;
     virtual QString name() const = 0;
+    virtual bool canMergeWith(ActionPtr act) const;
+    virtual void mergeWith(ActionPtr act);
+protected:
+    time_t timeStamp;
 };
 
 class HideFocusAction : public BaseAction{
@@ -44,9 +51,12 @@ public:
     ActionPtr getReversedAction()const override;
     QString name() const override;
     MoveFocusAction(const QSet<FocusItem*> &set,int dx,int dy);
+    bool canMergeWith(ActionPtr act) const override;
+    void mergeWith(ActionPtr act) override;
     int dx,dy;
     QSet<FocusItem*> items;
 private:
+    static constexpr int mergeTimeThresholdMS=1000;
 };
 class UndoManager : public QObject
 {

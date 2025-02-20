@@ -2,12 +2,6 @@
 #define PARSER_H
 
 #include <string>
-#include <list>
-#include <vector>
-#include <iostream>
-#include <algorithm>
-#include <fstream>
-#include <sstream>
 #include <QDebug>
 #include <QString>
 
@@ -35,7 +29,7 @@ public:
     // 在属性中寻找满足条件的 key, 返回这一 Attribute
     AttrPointer getFirst(QString key);
     QVector<AttrPointer> getAll(QString key);
-    QVector<AttrPointer> getAllExcept(QVector<QString> keys_excluded);
+    QVector<AttrPointer> getAllExcept(QVector<QString> keysExcluded);
 };
 
 class Attribute{
