@@ -6,24 +6,33 @@
 
 void FocusTreeView::contextMenuEvent(QContextMenuEvent *evt){
     FocusItem *t=getFocusAtGlobalPos(evt->globalPos());
-    if(t)menuTargetItem=t;
-    menu->exec(evt->globalPos());
+    if(t){
+        menuTargetItem=t;
+        menu->exec(evt->globalPos());
+    }
 }
 
 void FocusTreeView::mousePressEvent(QMouseEvent *evt){
     FocusItem *t=getFocusAtGlobalPos(evt->globalPosition().toPoint());
     bool shiftPressed = evt->modifiers() & Qt::ShiftModifier;
     bool ctrlPressed = evt->modifiers() & Qt::ControlModifier;
-    if(t){
-        if(!(shiftPressed) && !selection->contains(t))
-            clearSelection();
-        if(shiftPressed && selection->contains(t))deSelect(t);
-        else select(t);
-        if(ctrlPressed){
-            dragging=true;
-            moveReferenceItem=t;
-        }
-    }else clearSelection();
+    if(evt->button() == Qt::LeftButton){
+        if(t){
+            if(!(shiftPressed) && !selection->contains(t))
+                clearSelection();
+            if(shiftPressed && selection->contains(t))deSelect(t);
+            else select(t);
+            if(ctrlPressed){
+                dragging=true;
+                moveReferenceItem=t;
+            }
+        }else clearSelection();
+    }else if(evt->button() == Qt::RightButton){
+        setDragMode(QGraphicsView::ScrollHandDrag);
+        // 右键拖动按不出来，曲线救国
+        QMouseEvent leftPressEvent(QEvent::MouseButtonPress, evt->pos(), evt->globalPosition().toPoint(), Qt::LeftButton, Qt::NoButton, evt->modifiers());
+        QGraphicsView::mousePressEvent(&leftPressEvent);
+    }
     QGraphicsView::mousePressEvent(evt);
 }
 
@@ -46,13 +55,20 @@ void FocusTreeView::mouseMoveEvent(QMouseEvent *evt){
 
 void FocusTreeView::mouseReleaseEvent(QMouseEvent *evt){
     FocusItem *t=getFocusAtGlobalPos(evt->globalPosition().toPoint());
-    if(!dragging){
-        if(!(evt->modifiers() & Qt::ShiftModifier)){
-            clearSelection();
-            if(t)select(t);
+    if(evt->button() == Qt::LeftButton){
+        if(!dragging){
+            if(!(evt->modifiers() & Qt::ShiftModifier)){
+                clearSelection();
+                if(t)select(t);
+            }
         }
+        if(dragging) dragging=false;
     }
-    if(dragging) dragging=false;
+    if(evt->button() == Qt::RightButton){
+        QMouseEvent leftReleaseEvent(QEvent::MouseButtonRelease, evt->pos(), evt->globalPosition().toPoint(), Qt::LeftButton, Qt::NoButton, evt->modifiers());
+        QGraphicsView::mouseReleaseEvent(&leftReleaseEvent);
+        setDragMode(QGraphicsView::NoDrag);
+    }
     QGraphicsView::mouseReleaseEvent(evt);
 }
 
@@ -86,7 +102,6 @@ FocusTreeView::FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *pa
 {
     tree=_tree;
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
-    setDragMode(QGraphicsView::ScrollHandDrag);
     menu=new QMenu(this);
     QAction *act=new QAction("隐藏子树",this);
     QAction *act2=new QAction("选中子树",this);
