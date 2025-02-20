@@ -211,7 +211,7 @@ void focustree::on_actionopen_triggered()
     if (!fileName.isEmpty()) {
         qDebug() << "选择的文件:" << fileName;
     }else return;
-    AstNode node=Parser::parse(fileName);
+    ObjPointer node=Parser::parseFile(fileName);
     //node.prt();
     bool status=this->focusModel->init(node);
     if(!status){

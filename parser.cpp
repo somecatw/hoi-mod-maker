@@ -1,7 +1,25 @@
 #include "parser.h"
 using namespace std;
 
+struct AstNode{
+    std::string type,content;
+    std::vector<AstNode> children;
+    bool hide,end;
 
+    void prt(int width=0)const;
+private:
+    void _m_correct(std::vector<AstNode>& ttfa)const;
+    void pp(int width=0)const;
+public:
+
+    AstNode correct()const;
+    bool hasChild(std::string type)const;
+    bool hasContent(std::string cont)const;
+    AstNode firstMatch(std::string type)const;
+    std::vector<AstNode> allMatch(std::string type)const;
+
+
+};
 class __parser{
 private:
     using citer=std::string::const_iterator;
@@ -281,13 +299,58 @@ void Parser::clearComment(std::string &str){
     }
     str=temp;
 }
-AstNode Parser::parse(QString filename){
+ObjPointer toObject(const AstNode &node);
+AttrPointer toAttr(const AstNode &node){
+    if(node.type=="term"){
+        AttrPointer ret=AttrPointer::create();
+        ret->key = QString::fromStdString(node.children[0].content);
+        if(node.children.size()>1){
+            const AstNode &arg=node.children[1];
+            ret->op = QString::fromStdString(arg.children[0].content);
+            ret->value = toObject(arg.children[1]);
+        }
+        return ret;
+    }else{
+        qDebug()<<"Parser internal error:";
+        qDebug()<<"toAttr :: input is not a attribute";
+        return nullptr;
+    }
+}
+ObjPointer toObject(const AstNode &node){
+    if(node.type=="file"||node.type=="block"){
+        ObjPointer ret = ObjPointer::create(HoiObject::Object);
+        for(const AstNode &child:node.children){
+            if(child.type=="term")
+                ret->attributes.push_back(toAttr(child));
+        }
+        return ret;
+    }else if(node.type=="string"){
+        ObjPointer ret = ObjPointer::create(HoiObject::String);
+        ret->content = QString::fromStdString(node.content);
+        return ret;
+    }else{
+        qDebug()<<"Parser internal error:";
+        qDebug()<<"toObject :: input is not a hoi object";
+        return nullptr;
+    }
+}
+ObjPointer Parser::parseFile(QString filename){
     static bool flag=false;
 
     ifstream ttfa(filename.toStdString());
     stringstream buf;
     buf<<ttfa.rdbuf();
     string str=buf.str();
+
+    return hiddenParse(str);
+}
+
+ObjPointer Parser::parse(QString content){
+    return Parser::hiddenParse(content.toStdString());
+}
+
+ObjPointer Parser::hiddenParse(std::string str){
+    static bool flag=false;
 
     if(!flag){init();flag=true;}
 
@@ -302,45 +365,60 @@ AstNode Parser::parse(QString filename){
 
     AstNode node=file.parse(str).correct();
 
-    if(node.content.size()==str.size())qDebug().noquote()<<"Successfully loaded "<<filename<<Qt::endl;
-    else qDebug()<<"Syntax error found in "<<filename<<Qt::endl;
+    if(node.content.size()==str.size())qDebug().noquote()<<"Successfully parsed input string"<<Qt::endl;
+    else qDebug()<<"Parser::parse : Syntax error found in input string";
 
-    return node;
+    return toObject(node);
 }
 
-AstNode Parser::getFirst(const AstNode &node, QString key){
-    for(const AstNode &child:node.children)
-        if(child.type=="term"){
-            if(child.children[0].content==key)
-                return child;
+AttrPointer HoiObject::getFirst(QString key){
+    if(isString()){
+        qDebug()<<"HoiObject::getFirst: 此 obj 是字符串，不存在属性";
+        return nullptr;
+    }else{
+        foreach(AttrPointer ptr,attributes){
+            if(ptr->key==key)return ptr;
         }
-    return AstNode();
-}
-
-QVector<AstNode> Parser::getAll(const AstNode &node, QString key){
-    QVector<AstNode> ret;
-    for(const AstNode &child:node.children)
-        if(child.type=="term"){
-            if(child.children[0].content==key)
-                ret.emplaceBack(child);
-        }
-    return ret;
-}
-
-QVector<AstNode> Parser::getAllExcept(const AstNode &node, QVector<QString> keys){
-    QVector<AstNode> ret;
-    for(const AstNode &child:node.children)
-        if(child.type=="term"){
-            if(keys.indexOf(child.children[0].content)==-1)
-                ret.emplaceBack(child);
-        }
-    return ret;
-}
-
-AstNode Parser::getValue(const AstNode &node){
-    if(node.children.size()<=1||node.children[1].children.size()<=1){
-        qDebug()<<"Error: <key,value> expected but there's no value found";
-        return AstNode();
+        return nullptr;
     }
-    return node.children[1].children[1];
+}
+
+QVector<AttrPointer> HoiObject::getAll(QString key){
+    QVector<AttrPointer> ret;
+    if(isString()){
+        qDebug()<<"Parser::getAll: 传入的 obj 是字符串，不存在属性";
+        return ret;
+    }
+    foreach(AttrPointer ptr,attributes)
+        if(ptr->key==key)ret.push_back(ptr);
+    return ret;
+}
+
+QVector<AttrPointer> HoiObject::getAllExcept(QVector<QString> keys){
+    QVector<AttrPointer> ret;
+    if(isString()){
+        qDebug()<<"Parser::getAllExcept: 传入的 obj 是字符串，不存在属性";
+        return ret;
+    }
+    foreach(AttrPointer ptr,attributes)
+        if(keys.indexOf(ptr->key)==-1)
+            ret.push_back(ptr);
+    return ret;
+}
+
+bool Attribute::hasValue(){
+    return value!=nullptr;
+}
+bool HoiObject::isString(){
+    return type==HoiObject::String;
+}
+bool HoiObject::isObject(){
+    return type==HoiObject::Object;
+}
+HoiObject::HoiObject(int x){
+    type=x;
+}
+HoiObject::HoiObject(){}
+Attribute::Attribute(){
+    value=nullptr;
 }

@@ -1,10 +1,10 @@
 #include "focusmodel.h"
 
-AstNode request(const AstNode& node, QString key){
-    const AstNode &ret = Parser::getFirst(node,key);
-    if(ret.type.empty()){
+AttrPointer request(ObjPointer obj, QString key){
+    AttrPointer ret = obj->getFirst(key);
+    if(!ret){
         qDebug()<<"Error:"<<"key '"<<key<<"' missing in focus";
-        return AstNode();
+        return ret;
     }
     return ret;
 }
@@ -20,25 +20,23 @@ void FocusModel::moveFocus(const QString &index,int dx,int dy,bool isManual){
     emit focusMoved(index,dx,dy,isManual);
 }
 
-bool FocusModel::init(const AstNode& node){
-    const AstNode &tree = request(node,"focus_tree");
+bool FocusModel::init(ObjPointer obj){
+    AttrPointer tree = request(obj,"focus_tree");
 
-    if(tree.children.size()<=1||tree.children[1].children[1].type!="block"){
+    if(!tree){
         qDebug()<<"Error: 'focus_tree' is not found or not a block";
         return false;
     }
 
-    const AstNode& lst = tree.children[1].children[1];
+    ObjPointer lst = tree->value;
 
-    QVector<AstNode> v1=Parser::getAll(lst,"focus");
-    QVector<AstNode> v2=Parser::getAll(lst,"shared_focus");
+    QVector<AttrPointer> v1=lst->getAll("focus");
+    QVector<AttrPointer> v2=lst->getAll("shared_focus");
     v1.append(v2);
 
-    qDebug()<<tree.children.size()<<" "<<v1.size()<<" "<<v2.size();
-
     focuses.clear();
-    foreach(const AstNode& node,v1){
-        Focus f=Focus(node);
+    foreach(AttrPointer attr,v1){
+        Focus f=Focus(attr);
         focusIndex.insert(f.id,focuses.size());
         focuses.push_back(f);
     }
@@ -57,40 +55,41 @@ Focus FocusModel::data(const QString& index) const {
 const QVector<Focus>& FocusModel::allData() const{
     return focuses;
 }
-QVector<QString> getFocusPreqs(const AstNode &term){
+
+QVector<QString> getFocusPreqs(AttrPointer attr){
     QVector<QString> ret;
 
-    const QVector<AstNode> &focusNodes = Parser::getAll(Parser::getValue(term),"focus");
-    foreach(const AstNode &node,focusNodes)
-        ret.push_back(QString::fromStdString(Parser::getValue(node).content));
+    QVector<AttrPointer> focusNodes = attr->value->getAll("focus");
+    foreach(AttrPointer atr,focusNodes)
+        ret.push_back(atr->value->content);
 
     return ret;
 }
 
 Focus::Focus(){}
 
-Focus::Focus(const AstNode& node){
-    if(node.children.size()<=1||node.children[1].children[1].type!="block"){
-        if(node.children[0].content=="shared_focus")
-            qDebug()<<"Unknown shared focus"<<Parser::getValue(node).content<<"found";
-        else qDebug()<<"Error: 'focus' is not a block";
+Focus::Focus(AttrPointer attr){
+    if(!attr->hasValue()||attr->value->isString()){
+        if(attr->key=="shared_focus")
+            qDebug()<<"Unknown shared focus"<<attr->value->content<<"found";
+        else qDebug()<<"Error: value of attribute 'focus' is not a object";
         return;
     }
-    const AstNode &lst = Parser::getValue(node);
-    const AstNode &idNode   = Parser::getValue(request(lst,"id"));
-    const AstNode &iconNode = Parser::getValue(request(lst,"icon"));
-    const AstNode &xNode    = Parser::getValue(request(lst,"x"));
-    const AstNode &yNode    = Parser::getValue(request(lst,"y"));
-    const AstNode &rIdNode  = Parser::getFirst(lst,"relative_position_id");
-    const QVector<AstNode> &preqNodes = Parser::getAll(lst,"prerequisite");
-    const AstNode &exNode   = Parser::getFirst(lst,"mutually_exclusive");
+    ObjPointer obj = attr->value;
+    AttrPointer idNode   = request(obj,"id");
+    AttrPointer iconNode = request(obj,"icon");
+    AttrPointer xNode    = request(obj,"x");
+    AttrPointer yNode    = request(obj,"y");
+    AttrPointer rIdNode  = obj->getFirst("relative_position_id");
+    QVector<AttrPointer> preqNodes = obj->getAll("prerequisite");
+    AttrPointer exNode   = obj->getFirst("mutually_exclusive");
 
-    if(idNode.type.empty()||iconNode.type.empty()||xNode.type.empty()||yNode.type.empty())return;
+    if(!idNode||!iconNode||!xNode||!yNode)return;
 
-    this->id   = QString::fromStdString(idNode.content);
-    this->icon = QString::fromStdString(iconNode.content);
-    this->x    = QString::fromStdString(xNode.content).toInt();
-    this->y    = QString::fromStdString(yNode.content).toInt();
+    this->id   = idNode->value->content;
+    this->icon = iconNode->value->content;
+    this->x    = xNode->value->content.toInt();
+    this->y    = yNode->value->content.toInt();
 
     qDebug()<<"Found focus";
     qDebug()<<"Id  :"<<id;
@@ -98,13 +97,13 @@ Focus::Focus(const AstNode& node){
     qDebug()<<"x   :"<<x;
     qDebug()<<"y   :"<<y;
 
-    if(!rIdNode.type.empty())
-        this->relativeId = QString::fromStdString(Parser::getValue(rIdNode).content);
+    if(rIdNode)
+        this->relativeId = rIdNode->value->content;
 
-    if(!exNode.type.empty())
+    if(exNode)
         this->excl=getFocusPreqs(exNode);
 
-    foreach(const AstNode& node,preqNodes){
+    foreach(AttrPointer node,preqNodes){
         preReq.push_back(getFocusPreqs(node));
         /*qDebug()<<"preqs:";
         auto dbg=qDebug();
@@ -117,6 +116,6 @@ Focus::Focus(const AstNode& node){
     foreach(const QString &str,this->excl)
         dbg<<str;
     */
-    otherInfo=Parser::getAllExcept(lst,{"id","icon","x","y","relative_position_id","prerequisite","mutually_exclusive"});
+    otherInfo=obj->getAllExcept({"id","icon","x","y","relative_position_id","prerequisite","mutually_exclusive"});
 }
 

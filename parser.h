@@ -11,32 +11,41 @@
 #include <QDebug>
 #include <QString>
 
-// 抽象语法树上的节点，用于保存键值对
-struct AstNode{
-    std::string type,content;
-    std::vector<AstNode> children;
-    bool hide,end;
+class HoiObject;
+class Attribute;
 
-    // 调试监视用的输出函数
-    void prt(int width=0)const;
-private:
-    void _m_correct(std::vector<AstNode>& ttfa)const;
-    void pp(int width=0)const;
+using ObjPointer = QSharedPointer<HoiObject>;
+using AttrPointer = QSharedPointer<Attribute>;
+
+class HoiObject{
 public:
-    // parse 字符串后去掉隐藏节点用
-    AstNode correct()const;
+    static constexpr int String=0,Object=1;
 
-    // 查询子节点中有没有类型为 type 的节点
-    bool hasChild(std::string type)const;
+    HoiObject();
+    HoiObject(int _type);
 
-    // 查询子节点中有没有内容为 cont 的节点
-    bool hasContent(std::string cont)const;
+    // 同时只能存在一个，为方便起见，把两者并列
+    QString content;
+    QVector<AttrPointer> attributes;
 
-    // 返回第一个匹配 type 类型的节点
-    AstNode firstMatch(std::string type)const;
+    int type;
+    bool isString();
+    bool isObject();
 
-    // 以此类推
-    std::vector<AstNode> allMatch(std::string type)const;
+    // 在属性中寻找满足条件的 key, 返回这一 Attribute
+    AttrPointer getFirst(QString key);
+    QVector<AttrPointer> getAll(QString key);
+    QVector<AttrPointer> getAllExcept(QVector<QString> keys_excluded);
+};
+
+class Attribute{
+public:
+    QString key;
+    QString op;
+    ObjPointer value;
+    Attribute();
+    // hoi 语言的 attribute 可以只有 key 没有 value
+    bool hasValue();
 };
 
 class Parser{
@@ -44,17 +53,11 @@ private:
     static void init();
     static void replaceAll(std::string &str, const std::string &from, const std::string &to);
     static void clearComment(std::string &str);
+    static ObjPointer hiddenParse(std::string str);
 public:
     // 处理文件并返回文件对应的节点（如果匹配不上，会返回 type=fail）
-    static AstNode parse(QString filename);
-
-    // 在 node 的子节点中寻找满足条件的 key, 返回这一 term （输入 node 必须是 file 或者 block）
-    static AstNode getFirst(const AstNode &node, QString key);
-    static QVector<AstNode> getAll(const AstNode &node, QString key);
-    static QVector<AstNode> getAllExcept(const AstNode &node, QVector<QString> keys_excluded);
-
-    // 获取 term 的参数（输入 node 必须是 term）
-    static AstNode getValue(const AstNode &node);
+    static ObjPointer parseFile(QString filename);
+    static ObjPointer parse(QString content);
 };
 
 /*

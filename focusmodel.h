@@ -21,10 +21,10 @@ public:
     QVector<QString> excl;
     QString relativeId;
 
-    QVector<AstNode> otherInfo;
+    QVector<AttrPointer> otherInfo;
 
     Focus();
-    Focus(const AstNode& node);
+    Focus(AttrPointer attr);
 };
 
 class FocusModel : public QObject
@@ -32,7 +32,7 @@ class FocusModel : public QObject
     Q_OBJECT
 public:
     explicit FocusModel(QObject *parent = nullptr);
-    bool init(const AstNode& node);
+    bool init(ObjPointer obj);
     Focus data(const QString& index) const;
     const QVector<Focus>& allData() const;
     void moveFocus(const QString &id,int dx,int dy,bool isManual);
