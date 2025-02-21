@@ -93,6 +93,7 @@ void MoveFocusAction::mergeWith(ActionPtr act){
     MoveFocusAction *mfa=dynamic_cast<MoveFocusAction*>(act.data());
     dx+=mfa->dx;
     dy+=mfa->dy;
+    timeStamp=mfa->timeStamp;
 }
 
 void AddPrereqAction::execute(){

@@ -8,22 +8,30 @@
 
 using namespace std;
 
+struct StringView{
+    string::const_iterator start,end;
+    string toString()const{
+        return string(start,end);
+    }
+};
+
 struct AstNode{
-    std::string type,content;
-    std::vector<AstNode> children;
+    std::string type;
+    StringView content;
+    std::vector<shared_ptr<AstNode>> children;
     bool hide,end;
 
     void prt(int width=0)const;
 private:
-    void _m_correct(std::vector<AstNode>& ttfa)const;
+    void _m_correct(std::vector<shared_ptr<AstNode>>& ttfa)const;
     void pp(int width=0)const;
 public:
 
     AstNode correct()const;
     bool hasChild(std::string type)const;
     bool hasContent(std::string cont)const;
-    AstNode firstMatch(std::string type)const;
-    std::vector<AstNode> allMatch(std::string type)const;
+    shared_ptr<AstNode> firstMatch(std::string type)const;
+    std::vector<shared_ptr<AstNode>> allMatch(std::string type)const;
 
 
 };
@@ -106,7 +114,7 @@ private:
         (citerm begin,citer end,const matchnode& cnode);
 public:
     AstNode parse(citerm begin,citer end);
-    AstNode parse(std::string x);
+    AstNode parse(const std::string &x);
 };
 
 extern __parser file;
@@ -119,56 +127,56 @@ __parser::identifier::identifier(class __parser* parss){pars=parss;mode=2;}
 void AstNode::prt(int width)const{
     if(!hide){
         for(int i=0;i<width;i++)qDebug().noquote()<<"---";
-        qDebug().noquote()<<"\""<<content<<"\""<<" (type="<<type<<")"<<Qt::endl;
+        qDebug().noquote()<<"\""<<content.toString()<<"\""<<" (type="<<type<<")"<<Qt::endl;
     }
     if(end)return;
-    for(const AstNode& wtf:children)wtf.prt(width+(!hide));
+    for(const shared_ptr<AstNode>& wtf:children)wtf->prt(width+(!hide));
 }
 
-void AstNode::_m_correct(std::vector<AstNode>& ttfa)const{
-    AstNode self;
-    self.type=type,self.content=content;
+void AstNode::_m_correct(std::vector<shared_ptr<AstNode>>& ttfa)const{
+    shared_ptr<AstNode> self=make_shared<AstNode>();
+    self->type=type,self->content=content;
     if(end){if(!hide)ttfa.push_back(self);return;}
-    for(const AstNode& wtf:children)
-        if(hide)wtf._m_correct(ttfa);
-        else wtf._m_correct(self.children);
+    for(const shared_ptr<AstNode>& wtf:children)
+        if(hide)wtf->_m_correct(ttfa);
+        else wtf->_m_correct(self->children);
     if(!hide)ttfa.push_back(self);
 }
 void AstNode::pp(int width)const{
     for(int i=0;i<width;i++)std::cout<<"---";
-    std::cout<<"\""<<content<<"\""<<" (type="<<type<<")"<<std::endl;
-    for(const AstNode& wtf:children)wtf.pp(width+1);
+    std::cout<<"\""<<content.toString()<<"\""<<" (type="<<type<<")"<<std::endl;
+    for(const shared_ptr<AstNode>& wtf:children)wtf->pp(width+1);
 }
 
 AstNode AstNode::correct()const{
     AstNode root=*this;
-    while(root.hide)root=(root.children.at(0));
-    std::vector<AstNode> temp;
-    for(const AstNode& wtf:root.children)
-        wtf._m_correct(temp);
+    while(root.hide)root=*(root.children.at(0));
+    std::vector<shared_ptr<AstNode>> temp;
+    for(const shared_ptr<AstNode>& wtf:children)
+        wtf->_m_correct(temp);
     root.children=temp;
     return root;
 }
 
 bool AstNode::hasChild(std::string type)const{
-    for(const AstNode& child:this->children)
-        if(child.type==type)return true;
+    for(const shared_ptr<AstNode>& child:children)
+        if(child->type==type)return true;
     return false;
 }
 bool AstNode::hasContent(std::string cont)const{
-    for(const AstNode& child:this->children)
-        if(child.content==cont)return true;
+    for(const shared_ptr<AstNode>& child:children)
+        if(child->content.toString()==cont)return true;
     return false;
 }
-AstNode AstNode::firstMatch(std::string type)const{
-    for(const AstNode& child:this->children)
-        if(child.type==type)return child;
-    return AstNode();
+shared_ptr<AstNode> AstNode::firstMatch(std::string type)const{
+    for(const shared_ptr<AstNode>& child:children)
+        if(child->type==type)return child;
+    return nullptr;
 }
-std::vector<AstNode> AstNode::allMatch(std::string type)const{
-    std::vector<AstNode> ret;
-    for(const AstNode& child:this->children)
-        if(child.type==type)ret.push_back(child);
+std::vector<shared_ptr<AstNode>> AstNode::allMatch(std::string type)const{
+    std::vector<shared_ptr<AstNode>> ret;
+    for(const shared_ptr<AstNode>& child:children)
+        if(child->type==type)ret.push_back(child);
     return ret;
 }
 
@@ -203,9 +211,11 @@ AstNode __parser::tryMatch
         citer t=begin;
         if(cid.mode!=identifier::Exclude && end-begin<cid.str.size())goto fail;
         if(cid.mode==identifier::String){
+            auto t1=t;
             for(citer it=cid.str.begin();it!=cid.str.end();++it,++t)
                 if(*it!=*t){goto fail;}
-            considered_retval.push_back({"token",cid.str,{},chide});
+            auto t2=t;
+            considered_retval.push_back({"token",{t1,t2},{},chide});
             position_of_retval.push_back(t);
         }else if(cid.mode==identifier::Parser){
             AstNode curr=cid.pars->parse(t,end);
@@ -216,14 +226,14 @@ AstNode __parser::tryMatch
             //cout<<cid.str<<" "<<*t<<endl;
             if(cid.str.find(*t)==std::string::npos&&t!=end)++t;
             else goto fail;
-            AstNode temp={"token",std::string()+(*(t-1)),{},chide};
+            AstNode temp={"token",{t-1,t},{},chide};
             considered_retval.push_back(temp);
             position_of_retval.push_back(t);
         }
     fail:continue;
     }
     //temporary solution
-    if(!considered_retval.size())return {"fail","",{},false};
+    if(!considered_retval.size())return {"fail",{begin,begin},{},false};
     int id=0;
     for(unsigned i=0;i<considered_retval.size();i++)
         if(position_of_retval[i]>position_of_retval[id])id=i;
@@ -243,19 +253,19 @@ AstNode __parser::parse(citerm begin,citer end){
         while(!flag||cnode.mode==matchnode::repeatable){
             AstNode curr=tryMatch(begin,end,cnode);
             if(curr.type=="fail"){
-                if(cnode.mode==matchnode::necessary){return {"fail","",{},false};}
+                if(cnode.mode==matchnode::necessary){return {"fail",{begin,begin},{},false};}
                 else break;
             }
-            ret.children.push_back(curr);
+            ret.children.push_back(make_shared<AstNode>(curr));
             flag=true;
             while(tobeskiped(begin)&&begin!=end)begin++;
             if(endflag(begin))goto endwork;
         }
     }
-    ret.content=std::string(prevbegin,begin);
+    ret.content={prevbegin,begin};
 endwork:return ret;
 }
-AstNode __parser::parse(std::string x){
+AstNode __parser::parse(const std::string &x){
     citer a=x.begin(),b=x.end();
     return parse(a,b);
 }
@@ -310,11 +320,11 @@ ObjPointer toObject(const AstNode &node);
 AttrPointer toAttr(const AstNode &node){
     if(node.type=="term"){
         AttrPointer ret=AttrPointer::create();
-        ret->key = QString::fromStdString(node.children[0].content);
+        ret->key = QString::fromStdString(node.children[0]->content.toString());
         if(node.children.size()>1){
-            const AstNode &arg=node.children[1];
-            ret->op = QString::fromStdString(arg.children[0].content);
-            ret->value = toObject(arg.children[1]);
+            const AstNode &arg=*node.children[1];
+            ret->op = QString::fromStdString(arg.children[0]->content.toString());
+            ret->value = toObject(*arg.children[1]);
         }
         return ret;
     }else{
@@ -326,14 +336,14 @@ AttrPointer toAttr(const AstNode &node){
 ObjPointer toObject(const AstNode &node){
     if(node.type=="file"||node.type=="block"){
         ObjPointer ret = ObjPointer::create(HoiObject::Object);
-        for(const AstNode &child:node.children){
-            if(child.type=="term")
-                ret->attributes.push_back(toAttr(child));
+        for(const shared_ptr<AstNode> &child:node.children){
+            if(child->type=="term")
+                ret->attributes.push_back(toAttr(*child));
         }
         return ret;
     }else if(node.type=="string"){
         ObjPointer ret = ObjPointer::create(HoiObject::String);
-        ret->content = QString::fromStdString(node.content);
+        ret->content = QString::fromStdString(node.content.toString());
         return ret;
     }else{
         qDebug()<<"Parser internal error:";
@@ -369,13 +379,15 @@ ObjPointer Parser::hiddenParse(std::string str){
 
     if(str.size()>3u && (unsigned char)str[0]==0xef && (unsigned char)str[1]==0xbb && (unsigned char)str[2]==0xbf)
         str.erase(str.begin(),str.begin()+3);
+    AstNode node=file.parse(str);
 
-    AstNode node=file.parse(str).correct();
-
-    if(node.content.size()==str.size())qDebug().noquote()<<"Successfully parsed input string"<<Qt::endl;
+    if(node.content.toString().size()==str.size())qDebug().noquote()<<"Successfully parsed input string"<<Qt::endl;
     else qDebug()<<"Parser::parse : Syntax error found in input string";
 
-    return toObject(node);
+    node=node.correct();
+    ObjPointer ret=toObject(node);
+
+    return ret;
 }
 
 AttrPointer HoiObject::getFirst(QString key){
