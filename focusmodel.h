@@ -38,6 +38,8 @@ public:
     void batchMoveFocus(const QVector<QString> &ids,int dx,int dy);
     void addFocusPreq(const QString &baseId,const QString &targetId,int group);
     void removeFocusPreq(const QString &baseId,const QString &targetId);
+    void addFocusExcl(const QString &baseId,const QString &targetId);
+    void removeFocusExcl(const QString &baseId,const QString &targetId);
     int getFocusPreqGroup(const QString &baseId,const QString &targetId) const;
 private:
     QMap<QString,size_t> focusIndex;
@@ -45,6 +47,7 @@ private:
 signals:
     void focusMoved(const QVector<QString> &id,int dx,int dy);
     void focusPreqChanged(const QString &id);
+    void focusExclChanged(const QString &id);
 };
 
 #endif // FOCUSMODEL_H

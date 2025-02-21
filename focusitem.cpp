@@ -61,6 +61,7 @@ void FocusItem::setup(const QString& id,focustree *tr){
 void FocusItem::deSelect(){
     selected=false;
     frameEnabled=false;
+    if(isHidden)unreveal();
     update();
 }
 
@@ -70,6 +71,7 @@ void FocusItem::setFrame(const QColor &color){
 }
 void FocusItem::hideFrame(){
     frameEnabled=false;
+    if(isHidden)unreveal();
     update();
 }
 void FocusItem::hide(){

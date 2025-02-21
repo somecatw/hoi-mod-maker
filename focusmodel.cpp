@@ -41,6 +41,22 @@ void FocusModel::removeFocusPreq(const QString &baseId,const QString &targetId){
     emit focusPreqChanged(baseId);
 }
 
+void FocusModel::addFocusExcl(const QString &baseId,const QString &targetId){
+    size_t a=focusIndex[baseId],b=focusIndex[targetId];
+    focuses[a].excl.push_back(targetId);
+    focuses[b].excl.push_back(baseId);
+    emit focusExclChanged(baseId);
+    emit focusExclChanged(targetId);
+}
+
+void FocusModel::removeFocusExcl(const QString &baseId,const QString &targetId){
+    size_t a=focusIndex[baseId],b=focusIndex[targetId];
+    focuses[a].excl.remove(focuses[a].excl.indexOf(targetId));
+    focuses[b].excl.remove(focuses[b].excl.indexOf(baseId));
+    emit focusExclChanged(baseId);
+    emit focusExclChanged(targetId);
+}
+
 bool FocusModel::init(ObjPointer obj){
     AttrPointer tree = request(obj,"focus_tree");
 

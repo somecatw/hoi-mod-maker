@@ -28,6 +28,7 @@ focustree::focustree(QWidget *parent)
 
     connect(this->focusModel,&FocusModel::focusMoved,this,&focustree::handleFocusMove);
     connect(this->focusModel,&FocusModel::focusPreqChanged,this,&focustree::handleFocusPreqUpdated);
+    connect(this->focusModel,&FocusModel::focusExclChanged,this,&focustree::handleFocusExclUpdated);
 
     splitter->addWidget(treeView);
     splitter->addWidget(listView);
@@ -200,11 +201,13 @@ void focustree::setPreqFrames(const QString &str){
     for(unsigned i=0;i<v.size();i++)
         foreach(const QString &str,v[i]){
             items[str]->setFrame(focustree::colorList[i]);
+            items[str]->reveal();
         }
 
     const QVector<QString> &m=f.excl;
     foreach(const QString &str,m){
         items[str]->setFrame(0xff0000); // 红色代表互斥国策
+        items[str]->reveal();
     }
 }
 
@@ -241,26 +244,24 @@ void focustree::on_actionopen_triggered()
     }
 }
 
-void focustree::removeFocusExLine(const Focus &f){
-    foreach(const QString &str,f.excl){
-        LineItem *w;
-        FocusItem *a=items[f.id],
-            *b=items[str];
-        if((w=getExclLine(a,b))){
-            this->treeScene->removeItem(w);
-            delete w;
-            if(exclLines.contains({a,b}))
-                exclLines.remove({a,b});
-            else exclLines.remove({b,a});
-        }
+void focustree::removeFocusExLine(FocusItem *item){
+    QVector<QPair<FocusItem*,FocusItem*>> toRemove;
+    for(auto it=exclLines.begin();it!=exclLines.end();++it){
+        if(it.key().first==item || it.key().second==item)toRemove.push_back(it.key());
     }
+    foreach(const auto &p,toRemove){
+        treeScene->removeItem(exclLines[p]);
+        delete exclLines[p];
+        exclLines.remove(p);
+    }
+    item->exclItems.clear();
 }
 
 void focustree::updateExclusiveFocus(const QString &name){
     //qDebug()<<name<<"is hidden or shown";
     const Focus &f=this->focusModel->data(name);
     foreach(const QString &str,f.excl){
-        removeFocusExLine(focusModel->data(str));
+        removeFocusExLine(items[str]);
         addFocusExLine(focusModel->data(str));
     }
 }
@@ -373,6 +374,12 @@ void focustree::addFocusPrereq(const QString &baseId,const QString &targetId,int
 void focustree::removeFocusPrereq(const QString &baseId,const QString &targetId){
     focusModel->removeFocusPreq(baseId,targetId);
 }
+void focustree::addFocusExcl(const QString &baseId,const QString &targetId){
+    focusModel->addFocusExcl(baseId,targetId);
+}
+void focustree::removeFocusExcl(const QString &baseId,const QString &targetId){
+    focusModel->removeFocusExcl(baseId,targetId);
+}
 
 void focustree::removeFocusPreqLine(FocusItem *item){
     foreach(BrokenLine *l,item->preqLines){
@@ -394,4 +401,10 @@ void focustree::handleFocusPreqUpdated(const QString &id){
     removeFocusPreqLine(items[id]);
     addFocusPreqLine(focusModel->data(id));
     setPreqFrames(id);
+}
+
+void focustree::handleFocusExclUpdated(const QString &id){
+    emit treeView->frameResetNeeded();
+    removeFocusExLine(items[id]);
+    addFocusExLine(focusModel->data(id));
 }

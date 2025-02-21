@@ -127,3 +127,33 @@ RemovePrereqAction::RemovePrereqAction(focustree *_tree,QString _itemId,QString 
 QString RemovePrereqAction::name()const{
     return "RemovePrerequisite";
 }
+
+void AddExclAction::execute(){
+    tree->addFocusExcl(itemId,exclId);
+}
+ActionPtr AddExclAction::getReversedAction()const{
+    return newAction<RemoveExclAction>(tree,itemId,exclId);
+}
+AddExclAction::AddExclAction(focustree *_tree,QString _itemId,QString _exclId){
+    tree=_tree;
+    itemId=_itemId;
+    exclId=_exclId;
+}
+QString AddExclAction::name()const{
+    return "AddExclusion";
+}
+
+void RemoveExclAction::execute(){
+    tree->removeFocusExcl(itemId,exclId);
+}
+ActionPtr RemoveExclAction::getReversedAction()const{
+    return newAction<AddExclAction>(tree,itemId,exclId);
+}
+RemoveExclAction::RemoveExclAction(focustree *_tree,QString _itemId,QString _exclId){
+    tree=_tree;
+    itemId=_itemId;
+    exclId=_exclId;
+}
+QString RemoveExclAction::name()const{
+    return "RemoveExclusion";
+}

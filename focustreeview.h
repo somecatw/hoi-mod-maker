@@ -50,6 +50,7 @@ private:
     bool dragging;
     FocusItem *moveReferenceItem;
     FocusItem *hoveringItem;
+    QAction *act1,*act2,*act3,*act4;
 
     FocusItem *getFocusAtGlobalPos(const QPoint &p)const;
     void clearSelection();
@@ -60,8 +61,10 @@ signals:
 public slots:
     void hideFocus();
     void selectSubtree();
-    void setPrereq();
+    void addPrereq();
     void removePrereq();
+    void addExcl();
+    void removeExcl();
 };
 
 #endif // FOCUSTREEVIEW_H

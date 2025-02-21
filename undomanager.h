@@ -84,6 +84,28 @@ private:
     int group;
 };
 
+class AddExclAction: public BaseAction{
+public:
+    void execute() override;
+    ActionPtr getReversedAction()const override;
+    QString name() const override;
+    AddExclAction(focustree *tree,QString itemId,QString exclId);
+private:
+    focustree *tree;
+    QString itemId,exclId;
+};
+
+class RemoveExclAction: public BaseAction{
+public:
+    void execute() override;
+    ActionPtr getReversedAction()const override;
+    QString name() const override;
+    RemoveExclAction(focustree *tree,QString itemId,QString exclId);
+private:
+    focustree *tree;
+    QString itemId,exclId;
+};
+
 
 class UndoManager : public QObject
 {

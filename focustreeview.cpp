@@ -7,35 +7,44 @@
 
 void FocusTreeView::contextMenuEvent(QContextMenuEvent *evt){
     FocusItem *t=getFocusAtGlobalPos(evt->globalPos());
-    if(t){
+    if(menuTargetItem == t && t){
         menuTargetItem=t;
         bool addPreqFlag=false,removePreqFlag=false;
-        if(selection->size()==1 && t->y()<(*selection->itemSet().begin())->y()){
+        bool addExclFlag=false,removeExclFlag=false;
+
+        if(selection->size()==1){
             FocusItem *base=(*selection->itemSet().begin());
-            if(!base->preqItems.contains(t))
-                addPreqFlag=true;
-            else removePreqFlag=true;
+            if(selection->size()==1 && t->y()<base->y()){
+                if(!base->preqItems.contains(t))
+                    addPreqFlag=true;
+                else removePreqFlag=true;
+            }
+            if(selection->size()==1 && t->y()==base->y() && t!=base){
+                if(!base->exclItems.contains(t))
+                    addExclFlag=true;
+                else removeExclFlag=true;
+            }
         }
-        QAction *act1,*act2;
-        if(addPreqFlag){
-            act1=new QAction("设置为前置",this);
+
+        if(addPreqFlag)
             menu->addAction(act1);
-            connect(act1,&QAction::triggered,this,&FocusTreeView::setPrereq);
-        }
-        if(removePreqFlag){
-            act2=new QAction("取消前置",this);
+        if(removePreqFlag)
             menu->addAction(act2);
-            connect(act2,&QAction::triggered,this,&FocusTreeView::removePrereq);
-        }
+        if(addExclFlag)
+            menu->addAction(act3);
+        if(removeExclFlag)
+            menu->addAction(act4);
+
         menu->exec(evt->globalPos());
-        if(addPreqFlag){
+
+        if(addPreqFlag)
             menu->removeAction(act1);
-            delete act1;
-        }
-        if(removePreqFlag){
+        if(removePreqFlag)
             menu->removeAction(act2);
-            delete act2;
-        }
+        if(addExclFlag)
+            menu->removeAction(act3);
+        if(removeExclFlag)
+            menu->removeAction(act4);
     }
 }
 
@@ -59,6 +68,7 @@ void FocusTreeView::mousePressEvent(QMouseEvent *evt){
         // 右键拖动按不出来，曲线救国
         QMouseEvent leftPressEvent(QEvent::MouseButtonPress, evt->pos(), evt->globalPosition().toPoint(), Qt::LeftButton, Qt::NoButton, evt->modifiers());
         QGraphicsView::mousePressEvent(&leftPressEvent);
+        menuTargetItem=t;
     }
     QGraphicsView::mousePressEvent(evt);
 }
@@ -80,7 +90,10 @@ void FocusTreeView::mouseMoveEvent(QMouseEvent *evt){
             selection->move(tree,nx,ny);
             tree->uManager->addAction(newAction<MoveFocusAction>(selection->itemSet(),tree,nx,ny));
         }
-    }else QGraphicsView::mouseMoveEvent(evt);
+    }else{
+        menuTargetItem = nullptr;
+        QGraphicsView::mouseMoveEvent(evt);
+    }
 }
 
 void FocusTreeView::mouseReleaseEvent(QMouseEvent *evt){
@@ -125,7 +138,7 @@ void FocusTreeView::wheelEvent(QWheelEvent *evt){
     }else scale(1.0/fac,1.0/fac);
 }
 
-void FocusTreeView::setPrereq(){
+void FocusTreeView::addPrereq(){
     PrereqGroupSelector selector=PrereqGroupSelector(
         tree->model()->data((*selection->itemSet().begin())->focusid),
         tree->model()->data(menuTargetItem->focusid),
@@ -139,23 +152,47 @@ void FocusTreeView::removePrereq(){
     tree->uManager->addAction(newAction<RemovePrereqAction>(tree,(*selection->itemSet().begin())->focusid,menuTargetItem->focusid,group));
 }
 
+void FocusTreeView::addExcl(){
+    tree->addFocusExcl((*selection->itemSet().begin())->focusid,menuTargetItem->focusid);
+    tree->uManager->addAction(newAction<AddExclAction>(tree,(*selection->itemSet().begin())->focusid,menuTargetItem->focusid));
+}
+
+void FocusTreeView::removeExcl(){
+    tree->removeFocusExcl((*selection->itemSet().begin())->focusid,menuTargetItem->focusid);
+    tree->uManager->addAction(newAction<RemoveExclAction>(tree,(*selection->itemSet().begin())->focusid,menuTargetItem->focusid));
+}
+
 FocusTreeView::FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *parent)
     :QGraphicsView(scene,parent)
 {
     tree=_tree;
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     menu=new QMenu(this);
-    QAction *act=new QAction("隐藏",this);
-    QAction *act2=new QAction("选中子树",this);
-    menu->addAction(act);
-    menu->addAction(act2);
+    QAction *act_hide=new QAction("隐藏",this);
+    QAction *act_select=new QAction("选中子树",this);
+    menu->addAction(act_hide);
+    menu->addAction(act_select);
     hoveringItem = nullptr;
     menuTargetItem = nullptr;
     moveReferenceItem = nullptr;
     dragging = false;
+
+    act1=new QAction("设置为前置",this);
+    connect(act1,&QAction::triggered,this,&FocusTreeView::addPrereq);
+
+    act2=new QAction("取消前置",this);
+    connect(act2,&QAction::triggered,this,&FocusTreeView::removePrereq);
+
+    act3=new QAction("设置为互斥",this);
+    connect(act3,&QAction::triggered,this,&FocusTreeView::addExcl);
+
+    act4=new QAction("取消互斥",this);
+    connect(act4,&QAction::triggered,this,&FocusTreeView::removeExcl);
+
+
     this->selection=new MultipleFocusSelection(this);
-    connect(act,&QAction::triggered,this,&FocusTreeView::hideFocus);
-    connect(act2,&QAction::triggered,this,&FocusTreeView::selectSubtree);
+    connect(act_hide,&QAction::triggered,this,&FocusTreeView::hideFocus);
+    connect(act_select,&QAction::triggered,this,&FocusTreeView::selectSubtree);
 }
 
 void FocusTreeView::hideFocus(){

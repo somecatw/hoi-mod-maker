@@ -43,6 +43,8 @@ public:
     void batchMoveFocus(const QSet<FocusItem*> items,int dx,int dy);
     void addFocusPrereq(const QString &baseId,const QString &targetId,int group);
     void removeFocusPrereq(const QString &baseId,const QString &targetId);
+    void addFocusExcl(const QString &baseId,const QString &targetId);
+    void removeFocusExcl(const QString &baseId,const QString &targetId);
     void setPreqFrames(const QString &id);
     bool noPreqHidden(const QString &id);
 
@@ -58,6 +60,7 @@ public slots:
     void showFocus(const QString &id);
     void handleFocusMove(const QVector<QString> &ids,int dx,int dy);
     void handleFocusPreqUpdated(const QString &id);
+    void handleFocusExclUpdated(const QString &id);
 
 private slots:
     void on_focusa_clicked();
@@ -86,7 +89,7 @@ private:
 
     void addFocusPreqLine(const Focus& f);
     void addFocusExLine(const Focus& f);
-    void removeFocusExLine(const Focus &f);
+    void removeFocusExLine(FocusItem *item);
     void removeFocusPreqLine(FocusItem *item);
 
     bool xQuery(int x1,int x2,int y,std::function<bool(FocusItem*)> f)const;
