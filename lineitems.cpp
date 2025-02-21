@@ -37,8 +37,8 @@ QRectF LineItem::boundingRect() const{
     return QRectF(0,0,abs(end.x())+2,end.y());
 }
 
-SolidLine::SolidLine(QObject *parent,bool _type)
-    :BrokenLine(parent){type=_type;}
+SolidLine::SolidLine(QObject *parent)
+    :BrokenLine(parent){turnPoint=0;}
 
 QPen SolidLine::getPen()const{
     QPen pen(QColor(0x99,0x99,0x99,int(255*0.75)));
@@ -46,8 +46,8 @@ QPen SolidLine::getPen()const{
     return pen;
 }
 
-DotLine::DotLine(QObject *parent,bool _type)
-    :BrokenLine(parent){type=_type;}
+DotLine::DotLine(QObject *parent)
+    :BrokenLine(parent){turnPoint=0;}
 
 QPen DotLine::getPen()const{
     QPen pen(QColor(0x99,0x99,0x99,int(255*0.75)));
@@ -89,8 +89,7 @@ void ExclusiveLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     }
 }
 
-BrokenLine::BrokenLine(QObject *parent,bool _type):LineItem(parent){
-    type=_type;
+BrokenLine::BrokenLine(QObject *parent):LineItem(parent){
     visibleEndCount=2;
 }
 void BrokenLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget){
@@ -103,13 +102,13 @@ void BrokenLine::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 
     // painter.drawRect(this->rect());
 
-    double midy=(type?end.y()-focustree::itemH/2:focustree::itemH/2);
+    double midy=focustree::itemH/2+focustree::hgap*turnPoint;
     painter->drawLine(beginX(),0,beginX(),midy);
     painter->drawLine(beginX(),midy,endX(),midy);
     painter->drawLine(endX(),midy,endX(),end.y());
 }
-void BrokenLine::setType(bool _type){
-    type=_type;
+void BrokenLine::setTurnPoint(int _turnPoint){
+    turnPoint=_turnPoint;
 }
 
 void BrokenLine::moveStart(int dx,int dy){

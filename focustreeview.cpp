@@ -64,6 +64,9 @@ void FocusTreeView::mousePressEvent(QMouseEvent *evt){
 }
 
 void FocusTreeView::mouseMoveEvent(QMouseEvent *evt){
+    FocusItem *t=getFocusAtGlobalPos(evt->globalPosition().toPoint());
+    if(hoveringItem)hoveringItem->hovering=false,hoveringItem->update();
+    if(t)t->hovering=true,hoveringItem=t,t->update();
     if(dragging){
         QPointF localpos=mapToScene(mapFromGlobal(evt->globalPosition()).toPoint());
         int nx=localpos.x()/focustree::wgap;
@@ -144,10 +147,11 @@ FocusTreeView::FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *pa
     tree=_tree;
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     menu=new QMenu(this);
-    QAction *act=new QAction("隐藏子树",this);
+    QAction *act=new QAction("隐藏",this);
     QAction *act2=new QAction("选中子树",this);
     menu->addAction(act);
     menu->addAction(act2);
+    hoveringItem = nullptr;
     menuTargetItem = nullptr;
     moveReferenceItem = nullptr;
     dragging = false;
@@ -158,9 +162,17 @@ FocusTreeView::FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *pa
 
 void FocusTreeView::hideFocus(){
     if(menuTargetItem){
+        QSet<FocusItem*> tempSet=selection->itemSet();
         clearSelection();
-        menuTargetItem->hide();
-        tree->uManager->addAction(newAction<HideFocusAction>(menuTargetItem));
+        if(!tempSet.contains(menuTargetItem)){
+            menuTargetItem->hide();
+            tree->uManager->addAction(newAction<HideFocusAction>(QSet<FocusItem*>({menuTargetItem})));
+        }else{
+            foreach(FocusItem *item,tempSet){
+                item->hide();
+                tree->uManager->addAction(newAction<HideFocusAction>(tempSet));
+            }
+        }
     }
 }
 
@@ -240,9 +252,7 @@ int MultipleFocusSelection::limitY(int targetY){
 }
 
 void MultipleFocusSelection::move(focustree *tree,int dx,int dy){
-    foreach(FocusItem *item,items){
-        tree->moveFocus(item,dx,dy);
-    }
+    tree->batchMoveFocus(items,dx,dy);
 }
 
 const QSet<FocusItem*> &MultipleFocusSelection::itemSet()const{

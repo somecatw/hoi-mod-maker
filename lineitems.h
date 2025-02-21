@@ -25,13 +25,13 @@ protected:
 class BrokenLine : public LineItem{
     Q_OBJECT
 public:
-    explicit BrokenLine(QObject *parent = nullptr,bool _type=0);
-    void setType(bool _type);
+    explicit BrokenLine(QObject *parent = nullptr);
+    void setTurnPoint(int turnPoint);
 
 protected:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     virtual QPen getPen() const = 0;
-    bool type;
+    int turnPoint;
     int visibleEndCount;
 
 public slots:
@@ -44,7 +44,7 @@ public slots:
 class SolidLine : public BrokenLine{
     Q_OBJECT
 public:
-    explicit SolidLine(QObject *parent = nullptr,bool _type=0);
+    explicit SolidLine(QObject *parent = nullptr);
 protected:
     QPen getPen()const override;
 };
@@ -52,7 +52,7 @@ protected:
 class DotLine : public BrokenLine{
     Q_OBJECT
 public:
-    explicit DotLine(QObject *parent = nullptr,bool _type=0);
+    explicit DotLine(QObject *parent = nullptr);
 protected:
     QPen getPen()const override;
 };

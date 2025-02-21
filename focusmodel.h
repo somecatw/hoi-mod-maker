@@ -35,7 +35,7 @@ public:
     bool init(ObjPointer obj);
     Focus data(const QString& index) const;
     const QVector<Focus>& allData() const;
-    void moveFocus(const QString &id,int dx,int dy,bool isManual);
+    void batchMoveFocus(const QVector<QString> &ids,int dx,int dy);
     void addFocusPreq(const QString &baseId,const QString &targetId,int group);
     void removeFocusPreq(const QString &baseId,const QString &targetId);
     int getFocusPreqGroup(const QString &baseId,const QString &targetId) const;
@@ -43,7 +43,7 @@ private:
     QMap<QString,size_t> focusIndex;
     QVector<Focus> focuses;
 signals:
-    void focusMoved(const QString &id,int dx,int dy,bool isManual);
+    void focusMoved(const QVector<QString> &id,int dx,int dy);
     void focusPreqChanged(const QString &id);
 };
 

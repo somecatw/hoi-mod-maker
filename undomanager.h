@@ -30,9 +30,9 @@ public:
     void execute() override;
     ActionPtr getReversedAction()const override;
     QString name() const override;
-    HideFocusAction(FocusItem *_item);
+    HideFocusAction(const QSet<FocusItem*> &_items);
 private:
-    FocusItem *item;
+    QSet<FocusItem*> items;
 };
 
 class ShowFocusAction : public BaseAction{
@@ -40,9 +40,9 @@ public:
     void execute() override;
     ActionPtr getReversedAction()const override;
     QString name() const override;
-    ShowFocusAction(FocusItem *_item);
+    ShowFocusAction(const QSet<FocusItem*> &_items);
 private:
-    FocusItem *item;
+    QSet<FocusItem*> items;
 };
 
 class MoveFocusAction : public BaseAction{

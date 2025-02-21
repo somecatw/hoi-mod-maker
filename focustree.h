@@ -40,7 +40,7 @@ public:
 
     FocusModel *model();
     //void handleSelection(FocusItem *item,bool shiftPressed);
-    void moveFocus(FocusItem *item,int dx,int dy,bool isManual=false);
+    void batchMoveFocus(const QSet<FocusItem*> items,int dx,int dy);
     void addFocusPrereq(const QString &baseId,const QString &targetId,int group);
     void removeFocusPrereq(const QString &baseId,const QString &targetId);
     void setPreqFrames(const QString &id);
@@ -56,7 +56,7 @@ signals:
 
 public slots:
     void showFocus(const QString &id);
-    void handleFocusMove(const QString &id,int dx,int dy,bool isManual);
+    void handleFocusMove(const QVector<QString> &ids,int dx,int dy);
     void handleFocusPreqUpdated(const QString &id);
 
 private slots:
@@ -91,7 +91,7 @@ private:
     QGraphicsProxyWidget* getProxy(const QString& id) const;
 
     bool xQuery(int x1,int x2,int y,std::function<bool(FocusItem*)> f)const;
-    bool yQuery(int y1,int y2,int x,std::function<bool(FocusItem*)> f)const;
+    int yQuery(int y1,int y2,int x,std::function<bool(FocusItem*)> f)const;
     LineItem *getExclLine(FocusItem *a,FocusItem *b)const;
 };
 

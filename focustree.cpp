@@ -64,7 +64,7 @@ QGraphicsProxyWidget* focustree::getProxy(const QString& id) const{
 
 void focustree::showFocus(const QString &id){
     toItem(getProxy(id))->show();
-    uManager->addAction(newAction<ShowFocusAction>(toItem(getProxy(id))));
+    uManager->addAction(newAction<ShowFocusAction>(QSet<FocusItem*>({toItem(getProxy(id))})));
 }
 
 void focustree::addFocusItem(const Focus& f){
@@ -99,8 +99,9 @@ QPointF toCenter(const QPointF &p){
     return p+QPointF(focustree::itemW/2,focustree::itemH/2);
 }
 void focustree::addFocusPreqLine(const Focus &f){
+    FocusItem *curr=toItem(getProxy(f.id));
+    curr->visiblePreqCount=0;
     foreach(const QVector<QString> &v,f.preReq){
-        FocusItem *curr=toItem(getProxy(f.id));
         foreach(const QString &str,v){
             BrokenLine *l;
             if(v.size()==1)
@@ -113,9 +114,10 @@ void focustree::addFocusPreqLine(const Focus &f){
             preq->postItems.push_back(curr);
             curr->preqItems.push_back(preq);
 
-            if(yQuery(preq->displayPos.y(),curr->displayPos.y(),curr->displayPos.x(),[](FocusItem* x){
+            int dy=yQuery(preq->displayPos.y(),curr->displayPos.y(),curr->displayPos.x(),[](FocusItem* x){
                     return x->isVisible();
-                }))l->setType(1);
+            });
+            l->setTurnPoint(dy-1);
 
             QPointF p1 = toCenter(getProxy(str)->pos());
             QPointF p2 = toCenter(getProxy(f.id)->pos());
@@ -141,8 +143,13 @@ void focustree::addFocusPreqLine(const Focus &f){
 
             connect(preq,&FocusItem::hidden,curr,&FocusItem::preqHidden);
             connect(preq,&FocusItem::shown,curr,&FocusItem::preqShown);
+
+            if(preq->isVisible()){
+                curr->visiblePreqCount++;
+            }else{
+                l->hide();
+            }
         }
-        curr->visiblePreqCount+=v.size();
     }
 }
 void focustree::addFocusExLine(const Focus &f){
@@ -273,14 +280,14 @@ bool focustree::xQuery(int x1,int x2,int y,std::function<bool(FocusItem*)> f)con
     return false;
 }
 
-bool focustree::yQuery(int y1,int y2,int x,std::function<bool(FocusItem*)> f)const{
+int focustree::yQuery(int y1,int y2,int x,std::function<bool(FocusItem*)> f)const{
     if(y1>y2)std::swap(y1,y2);
     for(int i=y1+1;i<y2;i++)
         if(focusGrid.count(std::pair<int,int>(x,i))&&focusGrid[std::pair<int,int>(x,i)].size()){
             foreach(FocusItem *p,(focusGrid[std::pair<int,int>(x,i)]))
-                if(f(p))return true;
-        }
-    return false;
+                if(!f(p))return i-y1;
+        }else return i-y1;
+    return y2-y1;
 }
 
 LineItem* focustree::getExclLine(FocusItem *a,FocusItem *b)const{
@@ -327,21 +334,32 @@ void focustree::on_action_undo_triggered()
     uManager->undo();
 }
 
-void focustree::handleFocusMove(const QString &id,int dx,int dy,bool isManual){
-    auto *proxy=getProxy(id);
-    FocusItem *item=toItem(proxy);
-    QPointF npos=proxy->pos()+QPointF(dx*wgap,dy*hgap);
+void focustree::handleFocusMove(const QVector<QString> &ids,int dx,int dy){
+    foreach(const QString &id,ids){
+        auto *proxy=getProxy(id);
+        FocusItem *item=toItem(proxy);
+        QPointF npos=proxy->pos()+QPointF(dx*wgap,dy*hgap);
 
-    proxy->setPos(npos);
+        proxy->setPos(npos);
 
-    QVector<FocusItem*> &v=focusGrid[{item->displayPos.x(),item->displayPos.y()}];
-    v.erase(std::find(v.cbegin(),v.cend(),item));
-    focusGrid[{item->displayPos.x()+dx,item->displayPos.y()+dy}].push_back(item);
-    item->displayPos+=QPoint(dx,dy);
-    emit item->moved(dx*wgap,dy*hgap);
-
-    this->updateExclusiveFocus(id);
-    //qDebug()<<toItem(proxy)->displayPos<<" "<<dx<<dy;
+        QVector<FocusItem*> &v=focusGrid[{item->displayPos.x(),item->displayPos.y()}];
+        v.erase(std::find(v.cbegin(),v.cend(),item));
+        focusGrid[{item->displayPos.x()+dx,item->displayPos.y()+dy}].push_back(item);
+        item->displayPos+=QPoint(dx,dy);
+        emit item->moved(dx*wgap,dy*hgap);
+    }
+    foreach(const QString &id,ids){
+        this->updateExclusiveFocus(id);
+        FocusItem *item=toItem(getProxy(id));
+        // 暂时这么搞
+        for(unsigned i=0;i<item->preqItems.size();i++){
+            FocusItem *preq=item->preqItems[i];
+            int dy=yQuery(preq->displayPos.y(),item->displayPos.y(),item->displayPos.x(),[](FocusItem* x){
+                return x->isVisible();
+            });
+            item->preqLines[i]->setTurnPoint(dy-1);
+        }
+    }
 }
 
 void focustree::on_actiondaochu_triggered()
@@ -349,8 +367,10 @@ void focustree::on_actiondaochu_triggered()
 
 }
 
-void focustree::moveFocus(FocusItem *item,int dx,int dy,bool isManual){
-    focusModel->moveFocus(item->focusid,dx,dy,isManual);
+void focustree::batchMoveFocus(const QSet<FocusItem*> items,int dx,int dy){
+    QVector<QString> idx;
+    foreach(FocusItem *item,items)idx.push_back(item->focusid);
+    focusModel->batchMoveFocus(idx,dx,dy);
 }
 
 void focustree::addFocusPrereq(const QString &baseId,const QString &targetId,int group){

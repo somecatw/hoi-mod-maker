@@ -49,6 +49,7 @@ private:
     focustree *tree;
     bool dragging;
     FocusItem *moveReferenceItem;
+    FocusItem *hoveringItem;
 
     FocusItem *getFocusAtGlobalPos(const QPoint &p)const;
     void clearSelection();

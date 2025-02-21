@@ -40,34 +40,35 @@ void BaseAction::mergeWith(ActionPtr act){
 }
 
 void HideFocusAction::execute(){
-    item->hide();
+    foreach(FocusItem *item,items)
+        item->hide();
 }
 ActionPtr HideFocusAction::getReversedAction()const{
-    return newAction<ShowFocusAction>(item);
+    return newAction<ShowFocusAction>(items);
 }
-HideFocusAction::HideFocusAction(FocusItem *_item){
-    item=_item;
+HideFocusAction::HideFocusAction(const QSet<FocusItem*> &_items){
+    items=_items;
 }
 QString HideFocusAction::name()const{
     return "HideFocus";
 }
 
 void ShowFocusAction::execute(){
-    item->show();
+    foreach(FocusItem *item,items)
+        item->show();
 }
 ActionPtr ShowFocusAction::getReversedAction()const{
-    return newAction<HideFocusAction>(item);
+    return newAction<HideFocusAction>(items);
 }
-ShowFocusAction::ShowFocusAction(FocusItem *_item){
-    item=_item;
+ShowFocusAction::ShowFocusAction(const QSet<FocusItem*> &_items){
+    items=_items;
 }
 QString ShowFocusAction::name()const{
     return "ShowFocus";
 }
 
 void MoveFocusAction::execute(){
-    foreach(FocusItem *item,items)
-        tree->moveFocus(item,dx,dy);
+    tree->batchMoveFocus(items,dx,dy);
 }
 ActionPtr MoveFocusAction::getReversedAction()const{
     return newAction<MoveFocusAction>(items,tree,-dx,-dy);

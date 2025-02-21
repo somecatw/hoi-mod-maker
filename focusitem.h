@@ -36,6 +36,7 @@ public:
     QVector<BrokenLine*> preqLines;
     // 对应国策的 id
     QString focusid;
+    bool hovering;
 public slots:
     void hideFrame();
     void selectSubtree();
@@ -52,14 +53,10 @@ signals:
     void moved(int dx,int dy);
     void neededSelectSubtree();
 protected:
-    void enterEvent(QEnterEvent *evt) override;
-    void leaveEvent(QEvent *evt) override;
     void paintEvent(QPaintEvent *evt) override;
-    //void mousePressEvent(QMouseEvent *evt) override;
-    void contextMenuEvent(QContextMenuEvent *evt) override;
+
 private:
     Ui::FocusItem *ui;
-    bool hovering;
     bool frameEnabled;
     bool selected;
     bool isHidden;

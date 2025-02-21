@@ -13,11 +13,13 @@ FocusModel::FocusModel(QObject *parent)
     : QObject{parent}
 {}
 
-void FocusModel::moveFocus(const QString &index,int dx,int dy,bool isManual){
-    size_t id=focusIndex.value(index);
-    focuses[id].x+=dx;
-    focuses[id].y+=dy;
-    emit focusMoved(index,dx,dy,isManual);
+void FocusModel::batchMoveFocus(const QVector<QString> &ids,int dx,int dy){
+    foreach(const QString &index,ids){
+        size_t id=focusIndex.value(index);
+        focuses[id].x+=dx;
+        focuses[id].y+=dy;
+    }
+    emit focusMoved(ids,dx,dy);
 }
 
 void FocusModel::addFocusPreq(const QString &baseId,const QString &targetId,int group){

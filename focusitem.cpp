@@ -21,21 +21,6 @@ FocusItem::~FocusItem()
     delete ui;
 }
 
-void FocusItem::contextMenuEvent(QContextMenuEvent *evt){
-    menu->exec(QCursor::pos());
-    qDebug()<<999;
-}
-
-void FocusItem::enterEvent(QEnterEvent *evt){
-    hovering=true;
-    update();
-}
-
-void FocusItem::leaveEvent(QEvent *evt){
-    hovering=false;
-    update();
-}
-
 void FocusItem::paintEvent(QPaintEvent *evt){
     QPainter painter(this);
     painter.setBrush(Qt::gray);
@@ -75,19 +60,6 @@ void FocusItem::drawFrame(QPainter *painter,const QColor& color){
     painter->drawRect(siz-wid,siz-len,wid,len);
 }
 
-/*
-void FocusItem::mousePressEvent(QMouseEvent *evt){
-    if(evt->button()==Qt::LeftButton){
-        selected=true;
-        disconnect(tree,&focustree::resetSelection,this,&FocusItem::deSelect);
-        tree->handleSelection(this, evt->modifiers()&Qt::ShiftModifier);
-        connect(tree,&focustree::resetSelection,this,&FocusItem::deSelect);
-        update();
-    }else if(evt->button()==Qt::RightButton){
-
-    }
-}
-*/
 void FocusItem::setSelected(){
     selected=true;
 }
