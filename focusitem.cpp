@@ -1,44 +1,34 @@
 #include "focusitem.h"
-#include "ui_focusitem.h"
 #include "focustree.h"
 #include <QMenu>
 
-FocusItem::FocusItem(QWidget *parent)
-    : QWidget(parent)
-    , ui(new Ui::FocusItem)
+FocusItem::FocusItem(QObject *parent)
+    : QObject(parent)
 {
-    ui->setupUi(this);
     hovering=false;
     frameEnabled=false;
     selected=false;
     isHidden=false;
     visiblePreqCount=0;
-    setAttribute(Qt::WA_TranslucentBackground);
 }
 
-FocusItem::~FocusItem()
-{
-    delete ui;
-}
-
-void FocusItem::paintEvent(QPaintEvent *evt){
-    QPainter painter(this);
-    painter.setBrush(Qt::gray);
-    painter.drawEllipse({40,20},15,15);
+void FocusItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget){
+    painter->setBrush(Qt::gray);
+    painter->drawEllipse({40,20},15,15);
 
     QTextOption textOption;
     textOption.setWrapMode(QTextOption::WrapAnywhere);
     textOption.setAlignment(Qt::AlignCenter);
-    painter.drawText(QRect({0,40,80,40}),focusid,textOption);
+    painter->drawText(QRect({0,40,80,40}),focusid,textOption);
 
     if(hovering){
         //QImage bd(":/resource/icon/focus_hover.png");
         //painter.drawImage(0,0,bd);
-        drawFrame(&painter,Qt::green);
+        drawFrame(painter,Qt::green);
     }else if(selected){
-        drawFrame(&painter,0x1effff);
+        drawFrame(painter,0x1effff);
     }else if(frameEnabled){
-        drawFrame(&painter,frameColor);
+        drawFrame(painter,frameColor);
     }
 }
 
@@ -122,4 +112,8 @@ void FocusItem::unreveal(){
 void FocusItem::selectSubtree(){
     emit implicitlySelected(this);
     emit neededSelectSubtree();
+}
+
+QRectF FocusItem::boundingRect()const{
+    return QRectF(0,0,80,80);
 }

@@ -15,13 +15,13 @@ class focustree;
  * FocusTree 新建一系列的 FocusItem （是国策图标的 widget）
  * 点击 FocusItem 之后新建一个 FocusEditor 用来编辑国策内容
  */
-class FocusItem : public QWidget
+class FocusItem : public QObject,public QGraphicsItem
 {
     Q_OBJECT
+    Q_INTERFACES(QGraphicsItem)
 
 public:
-    explicit FocusItem(QWidget *parent = nullptr);
-    ~FocusItem();
+    explicit FocusItem(QObject *parent = nullptr);
     void setup(const QString &id,focustree *tr);
     void setFrame(const QColor &color);
     void hide();
@@ -29,6 +29,7 @@ public:
     // 用来在右侧悬停时暂时显示国策
     void reveal();
     void unreveal();
+    QRectF boundingRect()const override;
 
     int visiblePreqCount;
     QPoint displayPos;
@@ -53,10 +54,9 @@ signals:
     void moved(int dx,int dy);
     void neededSelectSubtree();
 protected:
-    void paintEvent(QPaintEvent *evt) override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 
 private:
-    Ui::FocusItem *ui;
     bool frameEnabled;
     bool selected;
     bool isHidden;

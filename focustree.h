@@ -77,7 +77,7 @@ private:
     QGraphicsScene *treeScene;
     FocusTreeView *treeView;
     FocusModel *focusModel;
-    QMap<QString,QGraphicsProxyWidget*> proxies;
+    QMap<QString,FocusItem*> items;
     QMap<std::pair<int,int>,QVector<FocusItem*>> focusGrid;
     QMap<QPair<FocusItem*,FocusItem*>,LineItem*> exclLines;
 
@@ -88,7 +88,6 @@ private:
     void addFocusExLine(const Focus& f);
     void removeFocusExLine(const Focus &f);
     void removeFocusPreqLine(FocusItem *item);
-    QGraphicsProxyWidget* getProxy(const QString& id) const;
 
     bool xQuery(int x1,int x2,int y,std::function<bool(FocusItem*)> f)const;
     int yQuery(int y1,int y2,int x,std::function<bool(FocusItem*)> f)const;

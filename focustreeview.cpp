@@ -113,9 +113,7 @@ void FocusTreeView::mouseDoubleClickEvent(QMouseEvent *evt){
 FocusItem *FocusTreeView::getFocusAtGlobalPos(const QPoint &p)const{
     QGraphicsItem *item=this->itemAt(mapFromGlobal(p));
     if(!item)return nullptr;
-    QGraphicsProxyWidget *w=dynamic_cast<QGraphicsProxyWidget*>(item);
-    if(!w)return nullptr;
-    FocusItem *t=dynamic_cast<FocusItem*>(w->widget());
+    FocusItem *t=dynamic_cast<FocusItem*>(item);
     if(!t)return nullptr;
     return t;
 }
