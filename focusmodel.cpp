@@ -60,23 +60,40 @@ void FocusModel::removeFocusExcl(const QString &baseId,const QString &targetId){
 bool FocusModel::init(ObjPointer obj){
     AttrPointer tree = request(obj,"focus_tree");
 
+    ObjPointer lst;
     if(!tree){
-        qDebug()<<"Error: 'focus_tree' is not found or not a block";
-        return false;
+        lst=obj;
+        // qDebug()<<"Error: 'focus_tree' is not found or not a block";
+        // return false;
+    }else{
+        lst=tree->value;
     }
-
-    ObjPointer lst = tree->value;
 
     QVector<AttrPointer> v1=lst->getAll("focus");
     QVector<AttrPointer> v2=lst->getAll("shared_focus");
+    QVector<AttrPointer> v3=lst->getAll("joint_focus");
     v1.append(v2);
+    v1.append(v3);
 
     focuses.clear();
+    focusIndex.clear();
+    protectedFocusId.clear();
+
     foreach(AttrPointer attr,v1){
-        Focus f=Focus(attr);
-        focusIndex.insert(f.id,focuses.size());
-        focuses.push_back(f);
+        if(attr->key=="shared_focus"&&attr->value->isString()){
+            qDebug()<<"发现了未知的 shared_focus: "<<attr->value->content;
+            protectedFocusId.insert(attr->value->content);
+        }else if(attr->key=="joint_focus"&&attr->value->isString()){
+            qDebug()<<"发现了未知的 joint_focus: "<<attr->value->content;
+            protectedFocusId.insert(attr->value->content);
+        }else{
+            Focus f=Focus(attr);
+            focusIndex.insert(f.id,focuses.size());
+            focuses.push_back(f);
+        }
     }
+
+    checkFocusDefinition();
 
     foreach(const Focus& f,focuses)
         if(!f.id.size())return false;
@@ -99,6 +116,24 @@ const QVector<Focus>& FocusModel::allData() const{
     return focuses;
 }
 
+void FocusModel::checkFocusDefinition(){
+    for(Focus &f:focuses){
+        foreach(const QVector<QString> &v,f.preReq){
+            foreach(const QString &str,v)
+                if(!focusIndex.contains(str)){
+                    protectedFocusId.insert(str);
+                    f.useLines = false;
+                }
+        }
+        foreach(const QString &str,f.excl){
+            if(!focusIndex.contains(str)){
+                protectedFocusId.insert(str);
+                f.useLines = false;
+            }
+        }
+    }
+}
+
 QVector<QString> getFocusPreqs(AttrPointer attr){
     QVector<QString> ret;
 
@@ -113,9 +148,7 @@ Focus::Focus(){}
 
 Focus::Focus(AttrPointer attr){
     if(!attr->hasValue()||attr->value->isString()){
-        if(attr->key=="shared_focus")
-            qDebug()<<"Unknown shared focus"<<attr->value->content<<"found";
-        else qDebug()<<"Error: value of attribute 'focus' is not a object";
+        qDebug()<<"Error: value of attribute 'focus' is not a object";
         return;
     }
     ObjPointer obj = attr->value;
@@ -154,11 +187,8 @@ Focus::Focus(AttrPointer attr){
             dbg<<str;*/
     }
 
-    /*auto dbg=qDebug();
-    dbg<<"mutually exclusives:";
-    foreach(const QString &str,this->excl)
-        dbg<<str;
-    */
+    useLines = true;
+
     otherInfo=obj->getAllExcept({"id","icon","x","y","relative_position_id","prerequisite","mutually_exclusive"});
 }
 

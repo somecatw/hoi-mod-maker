@@ -11,6 +11,7 @@ public:
     QString id;
     QString icon;
     int x,y;
+    bool useLines;
 
     /* 一个国策可能会有多组前置国策，每组只要完成一个即可，即与-或的关系
      * 在编辑国策时，每组前置国策用一种颜色显示
@@ -44,6 +45,12 @@ public:
 private:
     QMap<QString,size_t> focusIndex;
     QVector<Focus> focuses;
+
+    // 源文件中用到但没有定义的国策 id 被保护，不允许新建同名国策
+    // 如果某个国策的前置国策、互斥国策中出现这些 id，则不在 treeView 中绘制其前置、互斥国策线，将编辑功能移到 FocusEditor 中手动处理
+    QSet<QString> protectedFocusId;
+
+    void checkFocusDefinition();
 signals:
     void focusMoved(const QVector<QString> &id,int dx,int dy);
     void focusPreqChanged(const QString &id);

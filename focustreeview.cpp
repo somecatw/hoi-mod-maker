@@ -95,7 +95,12 @@ void FocusTreeView::mouseMoveEvent(QMouseEvent *evt){
         QGraphicsView::mouseMoveEvent(evt);
     }
 }
-
+void FocusTreeView::clearBuffer(){
+    moveReferenceItem = nullptr;
+    hoveringItem = nullptr;
+    menuTargetItem = nullptr;
+    selection->clear();
+}
 void FocusTreeView::mouseReleaseEvent(QMouseEvent *evt){
     FocusItem *t=getFocusAtGlobalPos(evt->globalPosition().toPoint());
     if(evt->button() == Qt::LeftButton){

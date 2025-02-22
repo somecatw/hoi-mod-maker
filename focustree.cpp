@@ -67,7 +67,7 @@ void focustree::addFocusItem(const Focus& f){
     if(items.count(f.id))return;
 
     FocusItem *item = new FocusItem();
-    item->setup(f.id,this);
+    item->setup(f.id,f.useLines,this);
     int rx=f.x,ry=f.y;
 
     connect(this->treeView,&FocusTreeView::cleared,item,&FocusItem::deSelect);
@@ -95,6 +95,7 @@ QPointF toCenter(const QPointF &p){
     return p+QPointF(focustree::itemW/2,focustree::itemH/2);
 }
 void focustree::addFocusPreqLine(const Focus &f){
+    if(!f.useLines)return;
     FocusItem *curr=items[f.id];
     curr->visiblePreqCount=0;
     foreach(const QVector<QString> &v,f.preReq){
@@ -149,8 +150,10 @@ void focustree::addFocusPreqLine(const Focus &f){
     }
 }
 void focustree::addFocusExLine(const Focus &f){
+    if(!f.useLines)return;
     qDebug()<<f.id;
     if(!items[f.id]->isVisible())return;
+    qDebug()<<items[f.id]->displayPos;
     foreach(const QString &str,f.excl){
         if(!items[str]->isVisible())continue;
 
@@ -197,6 +200,7 @@ FocusModel *focustree::model(){
 
 void focustree::setPreqFrames(const QString &str){
     const Focus &f=focusModel->data(str);
+    if(!f.useLines)return;
     const QVector<QVector<QString>> &v=f.preReq;
     for(unsigned i=0;i<v.size();i++)
         foreach(const QString &str,v[i]){
@@ -222,10 +226,20 @@ void focustree::on_actionopen_triggered()
     //node.prt();
     bool status=this->focusModel->init(node);
     if(!status){
-        qDebug()<<"国策树读取失败，文件中存在错误";
+        qDebug()<<"国策树文件中存在错误或未知的共享国策";
     }
 
-    this->treeScene->clear();
+    treeView->clearBuffer();
+
+    foreach(FocusItem *item,this->items){
+        removeFocusExLine(item);
+        removeFocusPreqLine(item);
+    }
+    foreach(FocusItem *item,this->items){
+        treeScene->removeItem(item);
+        item->deleteLater();
+    }
+
     this->items.clear();
     this->focusGrid.clear();
     this->exclLines.clear();
@@ -311,6 +325,7 @@ void focustree::revealFocus(const QString &id){
 }
 
 bool focustree::noPreqHidden(const QString &id){
+    if(!focusModel->data(id).useLines)return true;
     foreach(const QVector<QString> &v,focusModel->data(id).preReq){
         foreach(const QString &str,v){
             if(!items[str]->isVisible())return false;

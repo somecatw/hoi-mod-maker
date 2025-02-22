@@ -31,7 +31,7 @@ class FocusTreeView : public QGraphicsView
     Q_OBJECT
 public:
     FocusTreeView(focustree *_tree,QGraphicsScene *scene, QWidget *parent=nullptr);
-
+    void clearBuffer();
 public slots:
     void select(FocusItem *item);
     void deSelect(FocusItem *item);

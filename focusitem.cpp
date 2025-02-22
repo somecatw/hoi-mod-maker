@@ -21,6 +21,11 @@ void FocusItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
     textOption.setAlignment(Qt::AlignCenter);
     painter->drawText(QRect({0,40,80,40}),focusid,textOption);
 
+    if(!useLines){
+        painter->setBrush(Qt::NoBrush);
+        painter->drawRect(0,0,80,80);
+    }
+
     if(hovering){
         //QImage bd(":/resource/icon/focus_hover.png");
         //painter.drawImage(0,0,bd);
@@ -53,9 +58,10 @@ void FocusItem::drawFrame(QPainter *painter,const QColor& color){
 void FocusItem::setSelected(){
     selected=true;
 }
-void FocusItem::setup(const QString& id,focustree *tr){
+void FocusItem::setup(const QString& id,bool _useLines,focustree *tr){
     focusid=id;
     tree=tr;
+    useLines=_useLines;
 }
 
 void FocusItem::deSelect(){

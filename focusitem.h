@@ -22,7 +22,7 @@ class FocusItem : public QObject,public QGraphicsItem
 
 public:
     explicit FocusItem(QObject *parent = nullptr);
-    void setup(const QString &id,focustree *tr);
+    void setup(const QString &id,bool useLines,focustree *tr);
     void setFrame(const QColor &color);
     void hide();
     void setSelected();
@@ -38,6 +38,7 @@ public:
     // 对应国策的 id
     QString focusid;
     bool hovering;
+
 public slots:
     void hideFrame();
     void selectSubtree();
@@ -60,6 +61,8 @@ private:
     bool frameEnabled;
     bool selected;
     bool isHidden;
+    // 对应 Focus::useLines, 如果前置、互斥国策中存在未知国策，就框起来
+    bool useLines;
     QMenu *menu;
     QColor frameColor;
     focustree *tree;
