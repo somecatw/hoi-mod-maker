@@ -54,8 +54,8 @@ FocusItem *toItem(QGraphicsProxyWidget *w){
 
 void focustree::on_focusa_clicked()
 {
-    FocusEditor *a = new FocusEditor();
-    a->show();
+    // FocusEditor *a = new FocusEditor();
+    // a->show();
 }
 
 void focustree::showFocus(const QString &id){

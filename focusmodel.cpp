@@ -147,6 +147,7 @@ QVector<QString> getFocusPreqs(AttrPointer attr){
 Focus::Focus(){}
 
 Focus::Focus(AttrPointer attr){
+    src = attr;
     if(!attr->hasValue()||attr->value->isString()){
         qDebug()<<"Error: value of attribute 'focus' is not a object";
         return;

@@ -24,6 +24,8 @@ public:
 
     QVector<AttrPointer> otherInfo;
 
+    AttrPointer src;
+
     Focus();
     Focus(AttrPointer attr);
 };

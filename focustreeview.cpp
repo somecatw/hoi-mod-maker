@@ -123,7 +123,7 @@ void FocusTreeView::mouseReleaseEvent(QMouseEvent *evt){
 void FocusTreeView::mouseDoubleClickEvent(QMouseEvent *evt){
     FocusItem *t=getFocusAtGlobalPos(evt->globalPosition().toPoint());
     if(t){
-        FocusEditor *e=new FocusEditor(tree);
+        FocusEditor *e=new FocusEditor(tree->model()->data(t->focusid),tree);
         e->show();
     }
 }

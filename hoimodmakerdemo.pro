@@ -15,6 +15,8 @@ SOURCES += \
     focusmodel.cpp \
     focustree.cpp \
     focustreeview.cpp \
+    hoilangedit.cpp \
+    hoilangview.cpp \
     idea_editer.cpp \
     lineitems.cpp \
     main.cpp \
@@ -33,6 +35,8 @@ HEADERS += \
     focusmodel.h \
     focustree.h \
     focustreeview.h \
+    hoilangedit.h \
+    hoilangview.h \
     idea_editer.h \
     lineitems.h \
     mainwindow.h \
@@ -48,6 +52,7 @@ FORMS += \
     focusitem.ui \
     focuslistview.ui \
     focustree.ui \
+    hoilangview.ui \
     idea_editer.ui \
     mainwindow.ui \
     prereqgroupselector.ui \
