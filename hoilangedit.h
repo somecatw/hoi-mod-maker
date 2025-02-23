@@ -32,6 +32,10 @@ public:
     void clearSelection();
 public slots:
     void updateSize();
+protected:
+    void keyPressEvent(QKeyEvent *evt) override;
+private:
+    QString getIndentation(const QString &str) const;
 };
 
 class HoiLangEdit: public QScrollArea

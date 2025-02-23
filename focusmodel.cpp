@@ -159,7 +159,7 @@ Focus::Focus(AttrPointer attr){
     AttrPointer yNode    = request(obj,"y");
     AttrPointer rIdNode  = obj->getFirst("relative_position_id");
     QVector<AttrPointer> preqNodes = obj->getAll("prerequisite");
-    AttrPointer exNode   = obj->getFirst("mutually_exclusive");
+    QVector<AttrPointer> exNodes   = obj->getAll("mutually_exclusive");
 
     if(!idNode||!iconNode||!xNode||!yNode)return;
 
@@ -177,8 +177,10 @@ Focus::Focus(AttrPointer attr){
     if(rIdNode)
         this->relativeId = rIdNode->value->content;
 
-    if(exNode)
-        this->excl=getFocusPreqs(exNode);
+    if(exNodes.size()){
+        foreach(const AttrPointer &exNode,exNodes)
+            this->excl.append(getFocusPreqs(exNode));
+    }
 
     foreach(AttrPointer node,preqNodes){
         preReq.push_back(getFocusPreqs(node));

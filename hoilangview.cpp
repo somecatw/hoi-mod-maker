@@ -39,7 +39,21 @@ EditProtector defaultFocusProtector({
     "focus.mutually_exclusive",
     "focus.relative_position_id",
     "focus.id",
-    "focus.icon"
+    "focus.icon",
+    "shared_focus.x",
+    "shared_focus.y",
+    "shared_focus.prerequisite",
+    "shared_focus.mutually_exclusive",
+    "shared_focus.relative_position_id",
+    "shared_focus.id",
+    "shared_focus.icon",
+    "joint_focus.x",
+    "joint_focus.y",
+    "joint_focus.prerequisite",
+    "joint_focus.mutually_exclusive",
+    "joint_focus.relative_position_id",
+    "joint_focus.id",
+    "joint_focus.icon"
 });
 
 
@@ -146,16 +160,15 @@ void HoiLangView::save(const QVector<int> &path,AttrPointer repl){
         prev=x;
     }
     HoiLangItem *ex=dynamic_cast<HoiLangItem*>(prev);
-    HoiLangItem *item=new HoiLangItem(dynamic_cast<HoiLangItem*>(sp),editingItem->ptr,editingItem->uniquePath.back());
-
-    if(repl->hasValue())
-        recursivelyBuild(repl->value,item);
-
     ex->ptr->key = repl->key;
     if(repl->hasValue()){
         ex->ptr->op  = repl->op;
         ex->ptr->value = repl->value;
     }
+    HoiLangItem *item=new HoiLangItem(dynamic_cast<HoiLangItem*>(sp),editingItem->ptr,editingItem->uniquePath.back());
+
+    if(repl->hasValue())
+        recursivelyBuild(repl->value,item);
     for(int i=0;i<sp->rowCount();i++){
         if(sp->child(i)==ex){
             sp->setChild(i,item);
@@ -176,6 +189,16 @@ void HoiLangView::handleButtonClick(QAbstractButton *btn){
         }else if(ptr->attributes.size()>1||ptr->attributes.size()==0){
             QMessageBox::warning(this, "语法错误", "应只存在一个顶层对象，请检查并重试");
             return;
+        }
+        if(ptr->attributes[0]->key!=editingItem->ptr->key){
+            QMessageBox msgBox;
+            msgBox.setWindowTitle("警告");
+            msgBox.setIcon(QMessageBox::Warning);
+            msgBox.setText("修改属性名可能引起意外！");
+            msgBox.setInformativeText("确定要继续吗？");
+            msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+            msgBox.setDefaultButton(QMessageBox::No);
+            if(msgBox.exec()==QMessageBox::No)return;
         }
         if(ptr!=nullptr && ptr->attributes.size()){
             uManager->addAction(newAction<EditPropertyAction>(this,editingItem->uniquePath,editingItem->ptr->duplicate(),ptr->attributes[0]));

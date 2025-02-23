@@ -129,6 +129,24 @@ HoiTextEdit *HoiLangEdit::appendLangText(ObjPointer obj,HoiTextEdit *edit,bool i
     }
     return edit;
 }
+
+void HoiTextEdit::keyPressEvent(QKeyEvent *evt){
+    if(evt->key() == Qt::Key_Return || evt->key()==Qt::Key_Enter){
+        auto cursor = textCursor();
+        QString currentText = cursor.block().text();
+        cursor.insertText("\n" + getIndentation(currentText));
+        setTextCursor(cursor);
+    }else QTextEdit::keyPressEvent(evt);
+}
+QString HoiTextEdit::getIndentation(const QString &str)const{
+    QString ret;
+    foreach(QChar c,str){
+        if(c.isSpace()||c=='\t')ret+=c;
+        else break;
+    }
+    return ret;
+}
+
 void HoiLangEdit::init(AttrPointer attr,const QString &header,bool headProtected){
     foreach(HoiTextEdit *ptr,ttfa){
         layout->removeWidget(ptr);
