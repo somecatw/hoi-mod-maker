@@ -1,0 +1,4 @@
+every_core_state = "所有核心省份"
+random_core_state = "随机核心省份"
+random_owned_controlled_state = "随机的控制省份"
+controller = "控制者"

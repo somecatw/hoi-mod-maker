@@ -1,0 +1,5 @@
+communism = "共产主义"
+fascism = "法西斯主义"
+neutrality = "中立主义"
+democratic = "民主主义"
+ROOT = "执政党"

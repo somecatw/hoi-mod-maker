@@ -1,0 +1,7 @@
+#name = "编制名称"
+#priority = "优先级"
+#division_names_group = "师团名称组"
+#regiments = "营"
+template_counter = "支援连"
+is_locked = "是否可编辑"
+override_model = "模型"

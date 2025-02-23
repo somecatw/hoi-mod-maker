@@ -1,0 +1,2 @@
+factor = "基础倾向"
+modifier = "修正"

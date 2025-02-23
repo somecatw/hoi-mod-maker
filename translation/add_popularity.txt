@@ -1,0 +1,2 @@
+#ideology = " 党派"
+#popularity = "数值"
