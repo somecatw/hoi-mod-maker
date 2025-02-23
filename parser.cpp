@@ -344,6 +344,8 @@ ObjPointer toObject(const AstNode &node){
     }else if(node.type=="string"){
         ObjPointer ret = ObjPointer::create(HoiObject::String);
         ret->content = QString::fromStdString(node.content.toString());
+        while(ret->content.back()=='\t'||ret->content.back()=='\n'||ret->content.back()=='\r'||ret->content.back()==' ')ret->content.removeLast();
+        while(ret->content.front()=='\t'||ret->content.front()=='\n'||ret->content.front()=='\r'||ret->content.front()==' ')ret->content.removeFirst();
         return ret;
     }else{
         qDebug()<<"Parser internal error:";
@@ -382,8 +384,10 @@ ObjPointer Parser::hiddenParse(std::string str){
     AstNode node=file.parse(str);
 
     if(node.content.toString().size()==str.size())qDebug().noquote()<<"Successfully parsed input string"<<Qt::endl;
-    else qDebug()<<"Parser::parse : Syntax error found in input string";
-
+    else{
+        qDebug()<<"Parser::parse : Syntax error found in input string";
+        return nullptr;
+    }
     node=node.correct();
     ObjPointer ret=toObject(node);
 
@@ -425,13 +429,13 @@ QVector<AttrPointer> HoiObject::getAllExcept(QVector<QString> keys){
     return ret;
 }
 
-bool Attribute::hasValue(){
+bool Attribute::hasValue()const{
     return value!=nullptr;
 }
-bool HoiObject::isString(){
+bool HoiObject::isString()const{
     return type==HoiObject::String;
 }
-bool HoiObject::isObject(){
+bool HoiObject::isObject()const{
     return type==HoiObject::Object;
 }
 HoiObject::HoiObject(int x){
@@ -440,4 +444,22 @@ HoiObject::HoiObject(int x){
 HoiObject::HoiObject(){}
 Attribute::Attribute(){
     value=nullptr;
+}
+
+ObjPointer HoiObject::duplicate()const{
+    ObjPointer ret=ObjPointer::create(type);
+    ret->content=content;
+    foreach(const AttrPointer &attr,attributes){
+        ret->attributes.push_back(attr->duplicate());
+    }
+    return ret;
+}
+AttrPointer Attribute::duplicate()const{
+    AttrPointer ret=AttrPointer::create();
+    ret->key=key;
+    if(hasValue()){
+        ret->op=op;
+        ret->value=value->duplicate();
+    }
+    return ret;
 }

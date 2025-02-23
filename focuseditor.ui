@@ -56,8 +56,10 @@
    </widget>
    <widget class="QMenu" name="menu_4">
     <property name="title">
-     <string>手动编辑文本</string>
+     <string>编辑</string>
     </property>
+    <addaction name="action"/>
+    <addaction name="action_2"/>
    </widget>
    <widget class="QMenu" name="menu_5">
     <property name="title">
@@ -108,6 +110,22 @@
   <action name="actionC_2">
    <property name="text">
     <string>C</string>
+   </property>
+  </action>
+  <action name="action">
+   <property name="text">
+    <string>撤销</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
+  </action>
+  <action name="action_2">
+   <property name="text">
+    <string>重做</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Y</string>
    </property>
   </action>
  </widget>

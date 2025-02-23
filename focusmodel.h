@@ -28,6 +28,7 @@ public:
 
     Focus();
     Focus(AttrPointer attr);
+    AttrPointer toLangObj()const;
 };
 
 class FocusModel : public QObject

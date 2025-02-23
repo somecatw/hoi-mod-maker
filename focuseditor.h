@@ -16,6 +16,11 @@ public:
     explicit FocusEditor(const Focus &f,QWidget *parent = nullptr);
     ~FocusEditor();
 
+private slots:
+    void on_action_triggered();
+
+    void on_action_2_triggered();
+
 private:
     Ui::FocusEditor *focusui;
     Focus storedFocus;

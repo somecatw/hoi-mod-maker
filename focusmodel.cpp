@@ -193,3 +193,35 @@ Focus::Focus(AttrPointer attr){
     otherInfo=obj->getAllExcept({"id","icon","x","y","relative_position_id","prerequisite","mutually_exclusive"});
 }
 
+AttrPointer Focus::toLangObj()const{
+    QString buf="focus={";
+    buf+="id="+id+" ";
+    buf+="icon="+icon+" ";
+    buf+="x="+QString::number(x)+" ";
+    buf+="y="+QString::number(y)+" ";
+    if(this->relativeId.size())buf+="relative_position_id="+relativeId+" ";
+    if(this->preReq.size()){
+        foreach(const QVector<QString> &v,preReq){
+            buf+="prerequisite={";
+            foreach(const QString &str,v){
+                buf+="focus="+str+" ";
+            }
+            buf+="}";
+        }
+    }
+    if(this->excl.size()){
+        buf+="mutually_exclusive={";
+        foreach(const QString &str,excl){
+            buf+="focus="+str+" ";
+        }
+        buf+="}";
+    }
+    buf+="}";
+    AttrPointer attr=Parser::parse(buf)->attributes[0];
+    foreach(const AttrPointer &x,otherInfo){
+        attr->value->attributes.push_back(x->duplicate());
+    }
+    qDebug()<<"siz:"<<otherInfo.size();
+    return attr;
+}
+

@@ -2,6 +2,53 @@
 #include <QTextBlock>
 
 
+// gpt 写的
+HoiLangHighlighter::HoiLangHighlighter(QTextDocument *parent):QSyntaxHighlighter(parent){
+    QTextCharFormat keyFormat;
+    keyFormat.setForeground(Qt::blue);
+    keyFormat.setFontWeight(QFont::Bold);
+
+    // Define the format for values
+    QTextCharFormat valueFormat;
+    valueFormat.setForeground(Qt::darkBlue);
+
+    QTextCharFormat quotedValueFormat;
+    quotedValueFormat.setForeground(Qt::darkGreen);
+
+    // Define the rules for keys and values
+    HighlightingRule keyRule;
+    keyRule.pattern = QRegularExpression(R"([^<=>{}\t\r\n \"]+)");
+    keyRule.format = keyFormat;
+    highlightingRules.append(keyRule);
+
+    HighlightingRule valueRule;
+    valueRule.pattern = QRegularExpression(R"(([<=>]\s*)[^<=>{}\t\r\n "]+)");
+    valueRule.format = valueFormat;
+    highlightingRules.append(valueRule);
+
+    HighlightingRule quotedValueRule;
+    quotedValueRule.pattern = QRegularExpression(R"(([<=>]\s*)\"[^\"]*\")");
+    quotedValueRule.format = quotedValueFormat;
+    highlightingRules.append(quotedValueRule);
+}
+
+void HoiLangHighlighter::highlightBlock(const QString &text) {
+    foreach (const HighlightingRule &rule, highlightingRules) {
+        QRegularExpression expression(rule.pattern);
+        QRegularExpressionMatchIterator matchIterator = expression.globalMatch(text);
+        while (matchIterator.hasNext()) {
+            QRegularExpressionMatch match = matchIterator.next();
+            int startIndex = match.capturedStart();
+            int length = match.capturedLength();
+            if (rule.pattern.pattern().startsWith(R"(([<=>]\s*))")) {
+                startIndex += match.captured(1).length(); // Move start index past the equals sign
+                length -= match.captured(1).length(); // Reduce length to exclude the equals sign
+            }
+
+            setFormat(startIndex, length, rule.format);
+        }
+    }
+}
 
 HoiTextEdit::HoiTextEdit(QWidget *parent):QTextEdit(parent){
     QFont font("Consolas", 15);
@@ -10,8 +57,13 @@ HoiTextEdit::HoiTextEdit(QWidget *parent):QTextEdit(parent){
     QFontMetrics metrics(font);
     int tabStop = 4 * metrics.horizontalAdvance(' ');
     setTabStopDistance(tabStop);
+
+    setLineWrapMode(QTextEdit::NoWrap);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     isProtected=false;
+
+    new HoiLangHighlighter(document());
 }
 void HoiTextEdit::updateSize(){
     setFixedHeight(document()->size().rheight());
@@ -34,21 +86,22 @@ HoiLangEdit::HoiLangEdit(QWidget *parent):QScrollArea(parent) {
 void safeAppend(QTextEdit *edit,const QString &text){
     edit->textCursor().insertText(text);
 }
+HoiTextEdit *HoiLangEdit::addEdit(bool p){
+    HoiTextEdit *ret=new HoiTextEdit();
+    if(p)ret->setProtected(p);
+    layout->addWidget(ret);
+    ttfa.push_back(ret);
+    return ret;
+}
 HoiTextEdit *HoiLangEdit::appendLangText(AttrPointer attr,HoiTextEdit *edit,bool inheritedP,QString path,int w){
     bool prot;
     if(inheritedP)prot = true;
     else prot = view->protector.check(path);
     if(prot && ((edit==nullptr) || (edit!=nullptr && !edit->isProtected))){
-        HoiTextEdit *currEdit=new HoiTextEdit();
-        currEdit->setProtected(true);
-        layout->addWidget(currEdit);
-        ttfa.push_back(currEdit);
-        edit=currEdit;
+        edit=addEdit(true);
     }
     if(edit==nullptr || (edit!=nullptr && !prot && edit->isProtected)){
-        edit=new HoiTextEdit();
-        layout->addWidget(edit);
-        ttfa.push_back(edit);
+        edit=addEdit(false);
     }
     for(int i=0;i<w;i++)safeAppend(edit,"\t");
     safeAppend(edit,attr->key);
@@ -56,6 +109,8 @@ HoiTextEdit *HoiLangEdit::appendLangText(AttrPointer attr,HoiTextEdit *edit,bool
         safeAppend(edit," "+attr->op+" ");
         if(attr->value->isObject())safeAppend(edit,"{\n");
         edit = appendLangText(attr->value,edit,prot,path,w+1);
+        if(edit->isProtected!=prot)
+            edit=addEdit(prot);
         if(attr->value->isObject()){
             for(int i=0;i<w;i++)safeAppend(edit,"\t");
             safeAppend(edit,"}\n");
@@ -74,20 +129,27 @@ HoiTextEdit *HoiLangEdit::appendLangText(ObjPointer obj,HoiTextEdit *edit,bool i
     }
     return edit;
 }
-void HoiLangEdit::init(AttrPointer attr,const QString &header){
+void HoiLangEdit::init(AttrPointer attr,const QString &header,bool headProtected){
     foreach(HoiTextEdit *ptr,ttfa){
         layout->removeWidget(ptr);
         ptr->deleteLater();
     }
+    while(layout->count()){
+        auto *item=layout->takeAt(0);
+        delete item;
+    }
     ttfa.clear();
-    appendLangText(attr,nullptr,false,header);
+    appendLangText(attr,nullptr,headProtected,header);
     this->setWidget(w);
     foreach(HoiTextEdit *edit,ttfa){
         edit->document()->adjustSize();
         edit->updateSize();
+        edit->document()->clearUndoRedoStacks();
         connect(edit,&QTextEdit::textChanged,edit,&HoiTextEdit::updateSize);
         connect(edit,&QTextEdit::textChanged,this,&HoiLangEdit::textChanged);
+        connect(edit,&QTextEdit::cursorPositionChanged,this,&HoiLangEdit::ensureCursorVisible);
     }
+    layout->addStretch();
 }
 QString HoiLangEdit::plainText(){
     QString ret;
@@ -95,4 +157,19 @@ QString HoiLangEdit::plainText(){
         ret.append(edit->toPlainText());
     }
     return ret;
+}
+void HoiLangEdit::ensureCursorVisible(){
+    foreach(HoiTextEdit *edit,ttfa){
+        if(edit->hasFocus()){
+            QRect rect=edit->cursorRect();
+            rect.moveTopLeft(edit->mapTo(w,rect.topLeft()));
+            ensureVisible(rect.left(),rect.top());
+        }else edit->clearSelection();
+    }
+}
+
+void HoiTextEdit::clearSelection(){
+    auto cursor=this->textCursor();
+    cursor.clearSelection();
+    setTextCursor(cursor);
 }

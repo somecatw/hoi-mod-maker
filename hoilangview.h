@@ -5,7 +5,7 @@
 #include <QStandardItemModel>
 #include "parser.h"
 #include "qabstractbutton.h"
-#include "qpushbutton.h"
+#include "undomanager.h"
 
 namespace Ui {
 class HoiLangView;
@@ -16,6 +16,7 @@ public:
     EditProtector();
     EditProtector(std::initializer_list<QString> l);
     bool check(const QString &x);
+    bool checkPrefix(const QString &x);
 private:
     QSet<QString> protectedTerms;
 };
@@ -23,9 +24,10 @@ extern EditProtector defaultFocusProtector;
 
 class HoiLangItem : public QStandardItem{
 public:
-    explicit HoiLangItem(HoiLangItem *parent,AttrPointer ptr);
+    explicit HoiLangItem(HoiLangItem *parent,AttrPointer ptr,int rowId);
     AttrPointer ptr;
     QString path;
+    QVector<int> uniquePath;
     bool isProtected;
 };
 
@@ -37,7 +39,13 @@ public:
     explicit HoiLangView(QWidget *parent = nullptr);
     ~HoiLangView();
     void init(AttrPointer attr);
+    void save(const QVector<int> &path,AttrPointer repl);
     EditProtector protector;
+    UndoManager *uManager;
+
+public slots:
+    void undo();
+    void redo();
 
 protected:
     void resizeEvent(QResizeEvent *evt) override;

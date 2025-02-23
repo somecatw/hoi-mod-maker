@@ -7,12 +7,24 @@ FocusEditor::FocusEditor(const Focus &f,QWidget *parent)
     , storedFocus(f)
 {
     focusui->setupUi(this);
-    focusui->widget->init(f.src);
-    setCentralWidget(focusui->widget);
     focusui->widget->protector=defaultFocusProtector;
+    focusui->widget->init(f.toLangObj());
+    setCentralWidget(focusui->widget);
 }
 
 FocusEditor::~FocusEditor()
 {
     delete focusui;
 }
+
+void FocusEditor::on_action_triggered()
+{
+    focusui->widget->undo();
+}
+
+
+void FocusEditor::on_action_2_triggered()
+{
+    focusui->widget->redo();
+}
+

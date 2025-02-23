@@ -23,13 +23,15 @@ public:
     QVector<AttrPointer> attributes;
 
     int type;
-    bool isString();
-    bool isObject();
+    bool isString()const;
+    bool isObject()const;
 
     // 在属性中寻找满足条件的 key, 返回这一 Attribute
     AttrPointer getFirst(QString key);
     QVector<AttrPointer> getAll(QString key);
     QVector<AttrPointer> getAllExcept(QVector<QString> keysExcluded);
+
+    ObjPointer duplicate() const;
 };
 
 class Attribute{
@@ -39,7 +41,8 @@ public:
     ObjPointer value;
     Attribute();
     // hoi 语言的 attribute 可以只有 key 没有 value
-    bool hasValue();
+    bool hasValue()const;
+    AttrPointer duplicate() const;
 };
 
 class Parser{
